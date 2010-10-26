@@ -1,0 +1,14 @@
+#!/usr/bin/python
+
+import os, sys
+cwd = os.getcwd()
+sys.path.append(cwd)
+
+import turkic.cli
+
+try:
+    import cli
+except ImportError:
+    pass
+
+turkic.cli.main()
