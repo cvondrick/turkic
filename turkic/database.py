@@ -17,12 +17,22 @@ else:
     Session = sessionmaker(bind=engine)
 
     def connect():
+        """
+        Generates a database connection.
+        """
         return Session()
 
     def install():
+        """
+        Installs the database, but does not drop existing tables.
+        """
         Base.metadata.create_all(engine)
 
     def reinstall():
+        """
+        Reinstalls the database by dropping all existing tables. Actual data is
+        not migrated!
+        """
         Base.metadata.drop_all(engine)
         Base.metadata.create_all(engine)
 

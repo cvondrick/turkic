@@ -1,6 +1,6 @@
 signature = ""
 accesskey = ""
-sandbox   = False
+sandbox   = True
 localhost = "http://localhost/"
 database  = "mysql://root@localhost/turkic"
 

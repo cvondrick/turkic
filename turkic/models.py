@@ -13,6 +13,7 @@ class HITGroup(database.Base):
     lifetime    = Column(Integer, nullable = False)
     cost        = Column(Float, nullable = False)
     keywords    = Column(String(250), nullable = False)
+    height      = Column(Integer, nullable = False, default = 650)
 
 class Worker(database.Base):
     __tablename__ = "turkic_workers"
@@ -26,15 +27,16 @@ class Worker(database.Base):
     blocked        = Column(Boolean, default = False)
 
     def block(self):
-        pass
+        api.server.block(self.id)
 
     def unblock(self):
-        pass
+        api.server.unblock(self.id)
 
 class HIT(database.Base):
     __tablename__ = "turkic_hits"
 
-    id            = Column(String(30), primary_key = True)
+    id            = Column(Integer, primary_key = True)
+    hitid         = Column(String(30))
     groupid       = Column(Integer, ForeignKey(HITGroup.id), index = True)
     group         = relationship(HITGroup, cascade = "all", backref = "hits")
     assignmentid  = Column(String(30))
@@ -44,20 +46,35 @@ class HIT(database.Base):
     completed     = Column(Boolean, default = False, index = True)
     compensated   = Column(Boolean, default = False, index = True)
     accepted      = Column(Boolean, default = False, index = True)
-    pageurl       = Column(String(250))
     reason        = Column(Text)
     comments      = Column(Text)
     timeaccepted  = Column(DateTime)
     timecompleted = Column(DateTime)
+    page          = Column(String(250), nullable = False, default = "")
 
     def publish(self):
-        pass
+        resp = api.server.createhit(
+            title = self.group.title,
+            description = self.group.description,
+            amount = self.group.cost,
+            duration = self.group.duration,
+            lifetime = self.group.lifetime,
+            keywords = self.group.keywords,
+            height = self.group.height,
+            page = self.page
+        )
+        self.hitid = resp.hit_id
+        self.published = True
 
     def accept(self, reason = ""):
-        pass
+        api.server.accept(self.assignmentid, reason)
+        self.accepted = True
+        self.compensated = True
 
     def reject(self, reason = ""):
-        pass
+        api.server.reject(self.assignmentid, reason)
+        self.accepted = False
+        self.compensated = True
     
     def awardbonus(self, amount, reason):
         pass

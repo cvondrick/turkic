@@ -1,47 +1,63 @@
+"""
+A lightweight cli framework.
+
+To use this module, import the 'application function', which will dispatch commands
+based on handlers. To define a handler, decorate a function with the 'handler'
+decorator.
+"""
+
 import sys
 import cliutil
 
 handlers = {}
 
-def handler(inname = None):
+def handler(help = "", inname = None):
+    """
+    Decorator bind a function as a handler for a cli command.
+
+    help    specifies the help message to display
+    inname  specifies the name of the handler, otherwise infer
+    """
     def decorator(func):
         if inname is None:
             name = func.__name__
         else:
             name = inname
-        handlers[name] = func
+        handlers[name] = func, help
         return func
     return decorator
 
 def main(args = None):
+    """
+    Dispatches the cli command through a given handler.
+    """
     if args is None:
         args = sys.argv[1:]
-
     try:
         args[0]
     except IndexError:
         help()
     else:
         try:
-            handler = handlers[args[0]]
+            handler = handlers[args[0]][0]
         except KeyError:
             print "Error: Unknown action {0}".format(args[0])
         else:
-                handler(args[1:])
+            handler(args[1:])
 
-@handler()
 def help(args = None):
-    print "Available actions:"
-    for action in sorted(handlers.keys()):
-        print "  {0}".format(action)
-
+    """
+    Print the help information.
+    """
+    for action, (_, help) in sorted(handlers.items()):
+        print "{0:>15}   {1:<50}".format(action, help)
 
 try:
     import config
 except ImportError:
-    handler()(cliutil.init)
+    handler("Start a new project")(cliutil.init)
 else:
-    handler()(cliutil.build)
-    handler()(cliutil.progress)
-    handler()(cliutil.publish)
-    handler()(cliutil.compensate)
+    handler("Prepare for deployment.")(cliutil.build)
+    handler("Report job status")(cliutil.progress)
+    handler("Launch work")(cliutil.publish)
+    handler("Pay workers")(cliutil.compensate)

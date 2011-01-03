@@ -1,3 +1,9 @@
+var wordsofwisdom = ["Great job!",
+                     "Keep up the good work!",
+                     "Fantastic!",
+                     "Excellent!",
+                     "Thanks for your work!"]
+
 function mturk_parameters()
 {
     var retval = new Object();
@@ -47,9 +53,7 @@ function mturk_parameters()
 function mturk_isassigned()
 {
     var params = mturk_parameters();
-    return params.assignmentid &&
-        params.assignmentid != "ASSIGNMENT_ID_NOT_AVAILABLE" &&
-        params.hitid && params.workerid;
+    return params.assignmentid && params.assignmentid != "ASSIGNMENT_ID_NOT_AVAILABLE" && params.hitid && params.workerid;
 }
 
 function mturk_submit()
@@ -60,13 +64,15 @@ function mturk_submit()
         return;
     }
 
+    console.log("Preparing work for submission");
+
     var params = mturk_parameters();
 
     $("body").append('<form method="get" id="turkic_mturk">' +
         '<input type="hidden" name="assignmentId" value="">' +
         '</form>');
 
-    $("#turkic_mturk input"].val(params.assignmentid);
+    $("#turkic_mturk input").val(params.assignmentid);
     $("#turkic_mturk").attr("action", params.action);
     $("#turkic_mturk").submit();
 }
@@ -74,56 +80,75 @@ function mturk_submit()
 function mturk_acceptfirst()
 {
     var af = $('<div id="turkic_acceptfirst"></div>').prependTo("body")
-    af.html("You must accept the HIT before you can continue.");
+    af.html("Remember to accept the task before working!");
 }
 
 function worker_showstatistics()
 {
+    var stc = $('<div id="turkic_workerstatus"><div id="turkic_workerstatuscontent"></div></div>');
+    st = stc.children("#turkic_workerstatuscontent");
+
     server_workerstatus(function(data) {
-        var st = $('<div id="turkic_workerstatus"></div>');
-        st.prependTo("body");
+        st.html("");
+        if (!data["newuser"])
+        {
+            if (data["numaccepted"] > 10 && data["numaccepted"] > data["numrejected"])
+            {
+                var wisdom = $('<div id="turkic_workerstatuswisdom"></div>');
+                var randwisdom = Math.floor(wordsofwisdom.length * Math.random());
+                wisdom.html(wordsofwisdom[randwisdom]);
+                st.append(wisdom);
+            }
 
-        var subm = $('<div class="turkic_workerstatusnumber"></div>');
-        subm.html(data["numsubmitted"]);
-        subm.appendTo(st);
-        st.append("submitted");
+            st.append("Your record:");
 
-        var accp = $('<div class="turkic_workerstatusnumber"></div>');
-        accp.html(data["numaccepted"]);
-        accp.appendTo(st);
-        st.append("accepted");
+            var subm = $('<div class="turkic_workerstatusnumber"></div>');
+            subm.html(data["numsubmitted"]);
+            subm.appendTo(st);
+            st.append("submitted");
 
-        var rejt = $('<div class="turkic_workerstatusnumber"></div>');
-        rejt.html(data["numrejected"]);
-        rejt.appendTo(st);
-        st.append("rejected");
+            var accp = $('<div class="turkic_workerstatusnumber"></div>');
+            accp.html(data["numaccepted"]);
+            accp.appendTo(st);
+            st.append("accepted");
+
+            var rejt = $('<div class="turkic_workerstatusnumber"></div>');
+            rejt.html(data["numrejected"]);
+            rejt.appendTo(st);
+            st.append("rejected");
+        }
+        else
+        {
+            st.append("<strong>Welcome new user!</strong> Please take a minute to read the instructions.");
+        }
+        stc.prependTo("body");
     });
 }
 
-function worker_showtraining()
-{
-    var tr = $('<div id="turkic_training"></div>');
-    tr.appendTo("body");
-}
-
-function worker_hidetraining()
-{
-    $("#turkic_training").remove();
-}
-
-function worker_needstraining(iftrue, iffalse = null)
-{
-    server_workerstatus(function(data) {
-        if (data["trained"])
-        {
-            iftrue(data);
-        }
-        else if (iffalse != null)
-        {
-            iffalse(data);
-        }
-    });
-}
+//function worker_showtraining()
+//{
+//    var tr = $('<div id="turkic_training"></div>');
+//    tr.appendTo("body");
+//}
+//
+//function worker_hidetraining()
+//{
+//    $("#turkic_training").remove();
+//}
+//
+//function worker_needstraining(iftrue, iffalse)
+//{
+//    server_workerstatus(function(data) {
+//        if (data["newuser"])
+//        {
+//            iftrue(data);
+//        }
+//        else if (iffalse != null)
+//        {
+//            iffalse(data);
+//        }
+//    });
+//}
 
 function server_geturl(action, parameters)
 {
@@ -137,14 +162,17 @@ function server_geturl(action, parameters)
 
 function server_request(action, parameters, callback)
 {
+    var url = server_geturl(action, parameters);
+    console.log("Server request: " + url);
     $.ajax({
-        url: server_geturl(action, parameters);
+        url: url,
         dataType: "json",
         success: function(data) {
             callback(data);
         },
         error: function(xhr, textstatus) {
-            document.write(xhr.responseText);
+            console.log(xhr.responseText);
+            death("Server Error");
         }
     });
 }
@@ -169,4 +197,15 @@ function server_workerstatus(callback)
     {
         callback(server_workerstatus_data);
     }
+}
+
+function death(message)
+{
+    $("body").html("<style>body{background-color:#333;color:#fff;text-align:center;padding-top:100px;font-weight:bold;font-size:30px;font-family:Arial;</style>" + message);
+}
+
+if (!console)
+{
+    var console = new Object();
+    console.log = function() {};
 }

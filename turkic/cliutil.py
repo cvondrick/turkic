@@ -12,6 +12,11 @@ def init(args):
 
     skeleton = os.path.dirname(__file__) + "/skeleton"
     target = os.getcwd() + "/" + args[0]
+
+    if os.path.exists(target):
+        print "{0} already exists".format(target)
+        return
+
     shutil.copytree(skeleton, target);
 
     for file in glob.glob(target + "/*.pyc"):
@@ -20,7 +25,7 @@ def init(args):
     public = os.path.dirname(__file__) + "/public"
     os.symlink(public, target + "/public/turkic")
 
-    print "Initialized.";
+    print "Initialized new project: {0}".format(args[0]);
 
 def build(args):
     pass

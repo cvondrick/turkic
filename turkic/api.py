@@ -7,9 +7,10 @@ import urllib
 from xml.etree import ElementTree
 
 class Server(object):
-    def __init__(self, signature, accesskey, sandbox = False):
+    def __init__(self, signature, accesskey, localhost, sandbox = False):
         self.signature = signature
         self.accesskey = accesskey
+        self.localhost = localhost
         self.sandbox = sandbox
 
         if sandbox:
@@ -21,6 +22,10 @@ class Server(object):
         """
         Sends the request to the Turk server and returns a response object.
         """
+
+        if not self.signature or not self.accesskey:
+            raise RuntimeError("Signature or access key missing")
+
         timestamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
         hmacstr = hmac.new(config.signature, "AWSMechanicalTurkRequester" + operation + timestamp, hashlib.sha1)
         hmacstr = base64.encodestring(hmacstr.digest()).strip()
@@ -40,7 +45,7 @@ class Server(object):
         conn.close()
         return response
 
-    def createhit(self, title, description, page, parameters, amount, duration, lifetime, keywords = "", height = 650):
+    def createhit(self, title, description, page, amount, duration, lifetime, keywords = "", height = 650):
         """
         Creates a HIT on Mechanical Turk.
         
@@ -60,7 +65,7 @@ class Server(object):
             "LifetimeInSeconds": lifetime}
 
         r["Question"] = "<ExternalQuestion xmlns=\"http://mechanicalturk.amazonaws.com/AWSMechanicalTurkDataSchemas/2006-07-14/ExternalQuestion.xsd\">" +\
-        "<ExternalURL>{0}/{1}?{2}</ExternalURL>".format(config.Turk.host, page, urllib.urlencode(parameters).replace("&", "&amp;")) +\
+        "<ExternalURL>{0}/{1}</ExternalURL>".format(self.localhost, page) +\
         "<FrameHeight>{0}</FrameHeight>".format(height) +\
         "</ExternalQuestion>"
 
@@ -177,4 +182,4 @@ try:
 except ImportError:
     pass
 else:
-    server = Server(config.signature, config.accesskey, config.sandbox)
+    server = Server(config.signature, config.accesskey, config.localhost, config.sandbox)
