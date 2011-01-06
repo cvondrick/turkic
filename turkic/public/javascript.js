@@ -63,11 +63,11 @@ function mturk_isassigned()
     return params.assignmentid && params.assignmentid != "ASSIGNMENT_ID_NOT_AVAILABLE" && params.hitid && params.workerid;
 }
 
-function mturk_submit()
+function mturk_submit(callback)
 {
     if (!mturk_isassigned())
     {
-        alert("Error: cannot submit task because it is not accepted.");
+        alert("Please accept task before submitting.");
         return;
     }
 
@@ -83,11 +83,19 @@ function mturk_submit()
     $("#turkic_mturk input").val(params.assignmentid);
     $("#turkic_mturk").attr("action", params.action);
 
+    function redirect()
+    {
+        server_request("turkic_markcomplete", [params.hitid, params.assignmentid, params.workerid], function() {
+            $("#turkic_mturk").submit();
+        });
+    }
+
     var now = (new Date()).getTime();
-    server_request("turkic_savejobstats", [params.hitid, turkic_timeaccepted, now], function(data) {
-        $("#turkic_mturk").submit();
+    server_request("turkic_savejobstats", [params.hitid, turkic_timeaccepted, now], function() {
+        callback(redirect);
     });
 }
+
 
 function mturk_acceptfirst()
 {

@@ -46,3 +46,17 @@ def savejobstats(hitid, timeaccepted, timecompleted, environ):
         session.commit()
     finally:
         session.close()
+
+def markcomplete(hitid, assignmentid, workerid):
+    """
+    Marks a job as complete. Usually this is called right before the
+    MTurk form is submitted.
+    """
+    session = database.connect()
+    try:
+        hit = session.query(models.HIT).filter(models.HIT.hitid == hitid).one()
+        hit.markcompleted(workerid, assignmentid)
+        session.add(hit)
+        session.commit()
+    finally:
+        session.close()

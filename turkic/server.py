@@ -92,3 +92,5 @@ handlers["turkic_getworkerstatus"] = \
     (serverutil.getworkerstatus, "text/json", True, False, False)
 handlers["turkic_savejobstats"] = \
     (serverutil.savejobstats, "text/json", True, False, True)
+handlers["turkic_markcomplete"] = \
+    (serverutil.markcomplete, "text/json", True, False, False)
