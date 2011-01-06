@@ -58,7 +58,6 @@ class Server(object):
         r = {"Title": title,
             "Description": description,
             "Keywords": keywords,
-            "Parameters": parameters,
             "Reward.1.Amount": amount,
             "Reward.1.CurrencyCode": "USD",
             "AssignmentDurationInSeconds": duration,
@@ -89,6 +88,19 @@ class Server(object):
         """
         r = self.request("RejectAssignment", {"AssignmentId": assignmentid, "RequesterFeedback": feedback})
         r.validate("RejectAssignmentResult/Request/IsValid", "RejectAssignmentResult/Request/Errors/Error/Message")
+        return r
+
+    def bonus(self, workerid, assignmentid, amount, feedback = ""):
+        """
+        Grants a bonus to a worker for an assignment.
+        """
+        r = self.request("GrantBonus",
+            {"WorkerId": workerid,
+             "AssignmentId": assignmentid,
+             "BonusAmount.1.Amount": amount,
+             "BonusAmount.1.CurrencyCode": "USD",
+             "Reason": feedback});
+        r.validate("GrantBonusResult/Request/IsValid", "GrantBonusResult/Request/Errors/Error/Message")
         return r
 
     def block(self, workerid, reason = ""):

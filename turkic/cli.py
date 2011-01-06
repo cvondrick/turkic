@@ -57,7 +57,6 @@ try:
 except ImportError:
     handler("Start a new project")(cliutil.init)
 else:
-    handler("Prepare for deployment.")(cliutil.build)
     handler("Report job status")(cliutil.progress)
     handler("Launch work")(cliutil.publish)
     handler("Pay workers")(cliutil.compensate)

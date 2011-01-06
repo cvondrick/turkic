@@ -4,16 +4,19 @@ var wordsofwisdom = ["Great job!",
                      "Excellent!",
                      "Thanks for your work!"]
 
+var turkic_timeaccepted = (new Date()).getTime();
+
 function mturk_parameters()
 {
     var retval = new Object();
+    retval.action = "http://www.mturk.com/mturk/externalSubmit";
+    retval
 
     if (window.location.href.indexOf("?") == -1)
     {
         retval.assignmentid = null;
         retval.hitid = null;
         retval.workerid = null;
-        retval.action = null;
         return retval;
     }
 
@@ -45,6 +48,10 @@ function mturk_parameters()
             retval.action = decodeURIComponent(result) +
                 "/mturk/externalSubmit";
         }
+        else
+        {
+            retval[sp[0]] = result;
+        }
     }
     
     return retval;
@@ -60,7 +67,7 @@ function mturk_submit()
 {
     if (!mturk_isassigned())
     {
-        alert("Cannot submit task because it is not accepted.");
+        alert("Error: cannot submit task because it is not accepted.");
         return;
     }
 
@@ -70,11 +77,16 @@ function mturk_submit()
 
     $("body").append('<form method="get" id="turkic_mturk">' +
         '<input type="hidden" name="assignmentId" value="">' +
+        '<input type="hidden" name="data" value="" />' +
         '</form>');
 
     $("#turkic_mturk input").val(params.assignmentid);
     $("#turkic_mturk").attr("action", params.action);
-    $("#turkic_mturk").submit();
+
+    var now = (new Date()).getTime();
+    server_request("turkic_savejobstats", [params.hitid, turkic_timeaccepted, now], function(data) {
+        $("#turkic_mturk").submit();
+    });
 }
 
 function mturk_acceptfirst()
@@ -92,7 +104,7 @@ function worker_showstatistics()
         st.html("");
         if (!data["newuser"])
         {
-            if (data["numaccepted"] > 10 && data["numaccepted"] > data["numrejected"])
+            if (data["numaccepted"] >= 5 && data["numaccepted"] > data["numrejected"])
             {
                 var wisdom = $('<div id="turkic_workerstatuswisdom"></div>');
                 var randwisdom = Math.floor(wordsofwisdom.length * Math.random());
@@ -177,6 +189,25 @@ function server_request(action, parameters, callback)
     });
 }
 
+function server_post(action, parameters, data, callback)
+{
+    var url = server_geturl(action, parameters);
+    console.log("Server post: " + url);
+    $.ajax({
+        url: url,
+        dataType: "json",
+        type: "POST",
+        data: data,
+        success: function(data) {
+            callback(data);
+        },
+        error: function(xhr, textstatus) {
+            console.log(xhr.responseText);
+            death("Server Error");
+        }
+    });
+}
+
 var server_workerstatus_data = null;
 function server_workerstatus(callback)
 {
@@ -201,7 +232,7 @@ function server_workerstatus(callback)
 
 function death(message)
 {
-    $("body").html("<style>body{background-color:#333;color:#fff;text-align:center;padding-top:100px;font-weight:bold;font-size:30px;font-family:Arial;</style>" + message);
+    document.write("<style>body{background-color:#333;color:#fff;text-align:center;padding-top:100px;font-weight:bold;font-size:30px;font-family:Arial;</style>" + message);
 }
 
 if (!console)

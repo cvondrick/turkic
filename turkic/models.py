@@ -1,7 +1,8 @@
 import api
-from sqlalchemy import Column, Integer, String, Text, Float, Boolean, ForeignKey, Index, DateTime
+from sqlalchemy import Column, Integer, String, Text, Float, Boolean, ForeignKey, Index, DateTime, Numeric
 from sqlalchemy.orm import relationship, backref
 import database
+import random
 
 class HITGroup(database.Base):
     __tablename__ = "turkic_hit_groups"
@@ -32,6 +33,21 @@ class Worker(database.Base):
     def unblock(self):
         api.server.unblock(self.id)
 
+    @classmethod
+    def lookup(self, session, workerid):
+        worker = session.query(Worker)
+        worker = worker.filter(Worker.id == workerid)
+
+        if worker.count() > 0:
+            worker = worker.one()
+        else:
+            worker = Worker(
+                id = workerid,
+                numsubmitted = 0,
+                numacceptances = 0,
+                numrejections = 0)
+        return worker
+
 class HIT(database.Base):
     __tablename__ = "turkic_hits"
 
@@ -40,16 +56,20 @@ class HIT(database.Base):
     groupid       = Column(Integer, ForeignKey(HITGroup.id), index = True)
     group         = relationship(HITGroup, cascade = "all", backref = "hits")
     assignmentid  = Column(String(30))
-    workerid      = Column(Integer, ForeignKey(Worker.id), index = True)
+    workerid      = Column(String(14), ForeignKey(Worker.id), index = True)
     worker        = relationship(Worker, cascade = "all", backref = "tasks")
     published     = Column(Boolean, default = False, index = True)
     completed     = Column(Boolean, default = False, index = True)
     compensated   = Column(Boolean, default = False, index = True)
     accepted      = Column(Boolean, default = False, index = True)
+    validated     = Column(Boolean, default = False, index = True)
     reason        = Column(Text)
     comments      = Column(Text)
     timeaccepted  = Column(DateTime)
     timecompleted = Column(DateTime)
+    timeonserver  = Column(DateTime)
+    ipaddress     = Column(String(15))
+    bonus         = Column(Numeric, default = 0.0)
     page          = Column(String(250), nullable = False, default = "")
 
     def publish(self):
@@ -63,18 +83,57 @@ class HIT(database.Base):
             height = self.group.height,
             page = self.page
         )
-        self.hitid = resp.hit_id
+        self.hitid = resp.hitid
         self.published = True
 
-    def accept(self, reason = ""):
+    def markcompleted(self, workerid, assignmentid):
+        try:
+            workerid.numsubmitted
+        except:
+            session = database.Session.object_session(self)
+            worker = Worker.lookup(session, workerid)
+        else:
+            worker = workerid
+            
+        self.completed = True
+        self.assignmentid = assignmentid
+        self.worker = worker
+        self.worker.numsubmitted += 1
+
+    def accept(self, reason = None, bs = True):
+        if not reason:
+            if bs:
+                reason = random.choice(reasons) 
+            else:
+                reason = ""
+
         api.server.accept(self.assignmentid, reason)
         self.accepted = True
         self.compensated = True
+        self.worker.numacceptances += 1
 
     def reject(self, reason = ""):
         api.server.reject(self.assignmentid, reason)
         self.accepted = False
         self.compensated = True
+        self.worker.numrejections += 1
     
     def awardbonus(self, amount, reason):
-        pass
+        api.server.bonus(self.workerid, self.assignmentid, amount, reason)
+
+reasons = ["Thanks for your hard work!",
+          "Excellent work!",
+          "Excellent job!",
+          "Great work!",
+          "Great job!",
+          "Fantastic job!",
+          "Perfect!",
+          "Thank you!",
+          "Please keep working!",
+          "Your work is helping advance research.",
+          "We appreciate your work.",
+          "Please keep working.",
+          "You are doing an excellent job.",
+          "You are doing a great job.",
+          "You are doing a superb job.",
+          "Keep up the fantastic work!"]

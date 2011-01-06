@@ -1,6 +1,8 @@
 import database
 import models
 
+from datetime import datetime
+
 def getworkerstatus(workerid):
     """
     Returns the worker status as a dictionary for the server.
@@ -25,8 +27,22 @@ def getworkerstatus(workerid):
     finally:
         session.close()
 
-def savejobstats(hitid, workerid, assignmentid):
+def savejobstats(hitid, timeaccepted, timecompleted, environ):
     """
     Saves statistics for a job.
     """
-    return True
+    session = database.connect()
+    try:
+        hit = session.query(models.HIT).filter(models.HIT.hitid == hitid).one()
+
+        hit.timeaccepted = datetime.fromtimestamp(int(timeaccepted) / 1000)
+        hit.timecompleted = datetime.fromtimestamp(int(timecompleted) / 1000)
+        hit.timeonserver = datetime.now()
+
+        hit.ipaddress = environ.get("HTTP_X_FORWARDED_FOR", None)
+        hit.ipaddress = environ.get("REMOTE_ADDR", hit.ipaddress)
+
+        session.add(hit)
+        session.commit()
+    finally:
+        session.close()
