@@ -123,9 +123,12 @@ def compensate(args):
             if hit.compensated:
                 if hit.accepted:
                     print "Accepted HIT {0}".format(hit.hitid)
-                    if options.bonus > 0:
-                        hit.awardbonus(options.bonus, "Great job!")
-                        print "Awarded bonus to HIT {0}".format(hit.hitid)
+                    if hit.donatebonus:
+                        print "Worker elected to donate bonus."
+                    else:
+                        if options.bonus > 0:
+                            hit.awardbonus(options.bonus, "Great job!")
+                            print "Awarded bonus to HIT {0}".format(hit.hitid)
                 else:
                     print "Rejected HIT {0}".format(hit.hitid)
                 session.add(hit)

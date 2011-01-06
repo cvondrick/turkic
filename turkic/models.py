@@ -71,6 +71,7 @@ class HIT(database.Base):
     ipaddress     = Column(String(15))
     bonus         = Column(Numeric, default = 0.0)
     page          = Column(String(250), nullable = False, default = "")
+    donatebonus   = Column(Boolean, default = False)
 
     def publish(self):
         resp = api.server.createhit(

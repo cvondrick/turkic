@@ -46,3 +46,16 @@ def savejobstats(hitid, timeaccepted, timecompleted, environ):
         session.commit()
     finally:
         session.close()
+
+def savedonatestatus(hitid, donate):
+    """
+    Saves whether worker wants to donate bonus.
+    """
+    session = database.connect()
+    try:
+        hit = session.query(models.HIT).filter(models.HIT.hitid == hitid).one()
+        hit.donatebonus = bool(donate)
+        session.add(hit)
+        session.commit()
+    finally:
+        session.close()
