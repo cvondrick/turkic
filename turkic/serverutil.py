@@ -27,7 +27,7 @@ def getworkerstatus(workerid):
     finally:
         session.close()
 
-def savejobstats(hitid, timeaccepted, timecompleted, environ):
+def savejobstats(hitid, timeaccepted, timecompleted, donate, environ):
     """
     Saves statistics for a job.
     """
@@ -38,6 +38,7 @@ def savejobstats(hitid, timeaccepted, timecompleted, environ):
         hit.timeaccepted = datetime.fromtimestamp(int(timeaccepted) / 1000)
         hit.timecompleted = datetime.fromtimestamp(int(timecompleted) / 1000)
         hit.timeonserver = datetime.now()
+        hit.donatebonus = bool(donate)
 
         hit.ipaddress = environ.get("HTTP_X_FORWARDED_FOR", None)
         hit.ipaddress = environ.get("REMOTE_ADDR", hit.ipaddress)
@@ -56,7 +57,6 @@ def markcomplete(hitid, assignmentid, workerid, donate):
     try:
         hit = session.query(models.HIT).filter(models.HIT.hitid == hitid).one()
         hit.markcompleted(workerid, assignmentid)
-        hit.donatebonus = bool(donate)
         session.add(hit)
         session.commit()
     finally:
