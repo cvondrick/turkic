@@ -47,13 +47,15 @@ def savejobstats(hitid, timeaccepted, timecompleted, environ):
     finally:
         session.close()
 
-def savedonatestatus(hitid, donate):
+def markcomplete(hitid, assignmentid, workerid, donate):
     """
-    Saves whether worker wants to donate bonus.
+    Marks a job as complete. Usually this is called right before the
+    MTurk form is submitted.
     """
     session = database.connect()
     try:
         hit = session.query(models.HIT).filter(models.HIT.hitid == hitid).one()
+        hit.markcompleted(workerid, assignmentid)
         hit.donatebonus = bool(donate)
         session.add(hit)
         session.commit()
