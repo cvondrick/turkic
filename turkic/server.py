@@ -88,8 +88,8 @@ class Error404(Exception):
 
 # bind some default handlers
 import serverutil
-handlers["turkic_getworkerstatus"] = \
-    (serverutil.getworkerstatus, "text/json", True, False, False)
+handlers["turkic_getworkerstats"] = \
+    (serverutil.getworkerstats, "text/json", True, False, False)
 handlers["turkic_savejobstats"] = \
     (serverutil.savejobstats, "text/json", True, False, True)
 handlers["turkic_markcomplete"] = \

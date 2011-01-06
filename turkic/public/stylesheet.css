@@ -12,7 +12,7 @@
 /*    color : #fff;*/
 }
 
-#turkic_workerstatus
+#turkic_workerstats
 {
     position : absolute;
     top : 0;
@@ -23,22 +23,26 @@
     font-family : Arial;
 }
 
-#turkic_workerstatuscontent
+#turkic_workerstatscontent
 {
     padding : 10px;
 }
 
-.turkic_workerstatusnumber
+.turkic_workerstatsnumber
 {
     font-weight : bold;
-    padding : 0 5px 0 25px;
     display : inline;
 }
 
-#turkic_workerstatuswisdom
+.turkic_workerstatsperformance
+{
+    display : inline;
+    padding : 0 0 0 20px;
+}
+
+#turkic_workerstatsreward
 {
     float : right;
-    font-weight : bold;
 }
 
 body

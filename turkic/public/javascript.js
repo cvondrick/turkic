@@ -1,9 +1,3 @@
-var wordsofwisdom = ["Great job!",
-                     "Keep up the good work!",
-                     "Fantastic!",
-                     "Excellent!",
-                     "Thanks for your work!"]
-
 var turkic_timeaccepted = (new Date()).getTime();
 
 function mturk_parameters()
@@ -103,39 +97,43 @@ function mturk_acceptfirst()
     af.html("Remember to accept the task before working!");
 }
 
-function worker_showstatistics()
+function mturk_showstatistics()
 {
-    var stc = $('<div id="turkic_workerstatus"><div id="turkic_workerstatuscontent"></div></div>');
-    st = stc.children("#turkic_workerstatuscontent");
+    var stc = $('<div id="turkic_workerstats"><div id="turkic_workerstatscontent"></div></div>');
+    st = stc.children("#turkic_workerstatscontent");
 
-    server_workerstatus(function(data) {
+    server_workerstats(function(data) {
         st.html("");
+
+        var reward = $('<div id="turkic_workerstatsreward"></div>');
+        var amount = Math.round(data["reward"] * 100);
+        reward.html('Reward: <div class="turkic_workerstatsnumber">' + amount + ' &cent;</div>');
+        st.append(reward);
+
         if (!data["newuser"])
         {
-            if (data["numaccepted"] >= 5 && data["numaccepted"] > data["numrejected"])
-            {
-                var wisdom = $('<div id="turkic_workerstatuswisdom"></div>');
-                var randwisdom = Math.floor(wordsofwisdom.length * Math.random());
-                wisdom.html(wordsofwisdom[randwisdom]);
-                st.append(wisdom);
-            }
-
             st.append("Your record:");
 
-            var subm = $('<div class="turkic_workerstatusnumber"></div>');
-            subm.html(data["numsubmitted"]);
+            var subm = $('<div class="turkic_workerstatsperformance"></div>');
+            var submn = $('<div class="turkic_workerstatsnumber"></div>');
+            submn.html(data["numsubmitted"]);
+            submn.appendTo(subm);
+            subm.append(" submitted");
             subm.appendTo(st);
-            st.append("submitted");
 
-            var accp = $('<div class="turkic_workerstatusnumber"></div>');
-            accp.html(data["numaccepted"]);
+            var accp = $('<div class="turkic_workerstatsperformance"></div>');
+            var accpn = $('<div class="turkic_workerstatsnumber"></div>');
+            accpn.html(data["numaccepted"]);
+            accpn.appendTo(accp);
+            accp.append(" accepted");
             accp.appendTo(st);
-            st.append("accepted");
 
-            var rejt = $('<div class="turkic_workerstatusnumber"></div>');
-            rejt.html(data["numrejected"]);
+            var rejt = $('<div class="turkic_workerstatsperformance"></div>');
+            var rejtn = $('<div class="turkic_workerstatsnumber"></div>');
+            rejtn.html(data["numrejected"]);
+            rejtn.appendTo(rejt);
+            rejt.append(" rejected");
             rejt.appendTo(st);
-            st.append("rejected");
         }
         else
         {
@@ -158,7 +156,7 @@ function worker_showstatistics()
 //
 //function worker_needstraining(iftrue, iffalse)
 //{
-//    server_workerstatus(function(data) {
+//    server_workerstats(function(data) {
 //        if (data["newuser"])
 //        {
 //            iftrue(data);
@@ -216,25 +214,25 @@ function server_post(action, parameters, data, callback)
     });
 }
 
-var server_workerstatus_data = null;
-function server_workerstatus(callback)
+var server_workerstats_data = null;
+function server_workerstats(callback)
 {
-    if (server_workerstatus_data == null)
+    if (server_workerstats_data == null)
     {
         var params = mturk_parameters();
         if (params.workerid)
         {
-            server_request("turkic_getworkerstatus",
-                {"workerid": params.workerid},
+            server_request("turkic_getworkerstats",
+                [params.hitid, params.workerid],
                 function (data) {
-                    server_workerstatus_data = data;
+                    server_workerstats_data = data;
                     callback(data);
                 });
         }
     }
     else
     {
-        callback(server_workerstatus_data);
+        callback(server_workerstats_data);
     }
 }
 
