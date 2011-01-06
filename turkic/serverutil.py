@@ -38,7 +38,7 @@ def savejobstats(hitid, timeaccepted, timecompleted, donate, environ):
         hit.timeaccepted = datetime.fromtimestamp(int(timeaccepted) / 1000)
         hit.timecompleted = datetime.fromtimestamp(int(timecompleted) / 1000)
         hit.timeonserver = datetime.now()
-        hit.donatebonus = bool(donate)
+        hit.donatebonus = donate
 
         hit.ipaddress = environ.get("HTTP_X_FORWARDED_FOR", None)
         hit.ipaddress = environ.get("REMOTE_ADDR", hit.ipaddress)
@@ -48,7 +48,7 @@ def savejobstats(hitid, timeaccepted, timecompleted, donate, environ):
     finally:
         session.close()
 
-def markcomplete(hitid, assignmentid, workerid, donate):
+def markcomplete(hitid, assignmentid, workerid):
     """
     Marks a job as complete. Usually this is called right before the
     MTurk form is submitted.

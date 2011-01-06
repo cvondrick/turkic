@@ -99,7 +99,7 @@ function mturk_submit(callback)
     str += '<p>Congratulations! You have <strong>earned a one cent bonus</strong> as a reward for your hard work.</p>';
     str += '<p>We are giving workers the option to donate their bonus to a charity. Instead of taking the one cent for yourself, consider donating it. ';
     str += 'If every worker donates, together we can collectively donate <strong>hundreds of thousands of dollars</strong>. ';
-    str += 'If you choose to donate, we will pass your bonus on to Wikipedia on your behalf.</p>';
+    str += 'If you choose to donate, we will pass your bonus on to Wikipedia to support open access to information on the web.</p>';
     str += '<div style="margin-left : 20px;">';
     str += '<input type="radio" id="turkic_donate_yes" name="turkic_donate_option">';
     str += '<label for="turkic_donate_yes">Please donate this bonus to charity on my behalf.</label><br>';
@@ -107,7 +107,7 @@ function mturk_submit(callback)
     str += '<label for="turkic_donate_no">I want to keep this bonus for myself.</label><br>';
     str += '<input type="button" id="turkic_donate_submit" value="Submit HIT">';
     str += '</div>';
-    str += '<p>If you would like to suggeest a possible future charity, please do not hesistate to contact us.</p>';
+    str += '<p>If you would like to suggest a possible future charity, please do not hesistate to contact us.</p>';
     var donation = $('<div id="turkic_donation"></div>').appendTo("body");
     donation.append(str);
 
@@ -121,6 +121,7 @@ function mturk_submit(callback)
             return;
         }
 
+        var donateyes = donateyes ? 1 : 0;
         server_request("turkic_savejobstats", [params.hitid, turkic_timeaccepted, now, donateyes], function() {
             callback(redirect);
         });
