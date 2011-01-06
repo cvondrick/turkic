@@ -3,16 +3,24 @@ import models
 
 from datetime import datetime
 
-def getworkerstatus(workerid):
+def getworkerstats(hitid, workerid):
     """
     Returns the worker status as a dictionary for the server.
     """
     session = database.connect()
     try:
+        status = {}
+
+        hit = session.query(models.HIT)
+        hit = hit.filter(models.HIT.hitid == hitid)
+        hit = hit.one()
+
+        status["reward"] = hit.group.cost
+        status["bonus"] = hit.group.bonus
+        
         worker = session.query(models.Worker)
         worker = worker.filter(models.Worker.id == workerid)
 
-        status = {}
         try:
             worker = worker.one()
         except:

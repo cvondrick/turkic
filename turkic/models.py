@@ -15,6 +15,7 @@ class HITGroup(database.Base):
     cost        = Column(Float, nullable = False)
     keywords    = Column(String(250), nullable = False)
     height      = Column(Integer, nullable = False, default = 650)
+    bonus       = Column(Float, nullable = False, default = 0.0)
 
 class Worker(database.Base):
     __tablename__ = "turkic_workers"

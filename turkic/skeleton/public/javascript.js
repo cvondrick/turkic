@@ -6,6 +6,6 @@ $(document).ready(function()
     }
     else
     {
-        worker_showstatistics();
+        mturk_showstatistics();
     }
 });
