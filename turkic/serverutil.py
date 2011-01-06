@@ -16,6 +16,7 @@ def getworkerstats(hitid, workerid):
         hit = hit.one()
 
         status["reward"] = hit.group.cost
+        status["bonus"] = hit.group.bonus
         
         worker = session.query(models.Worker)
         worker = worker.filter(models.Worker.id == workerid)
