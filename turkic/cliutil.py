@@ -85,6 +85,7 @@ def publish(args):
 def compensate(args):
     parser = optparse.OptionParser(optparse.SUPPRESS_USAGE)
     parser.add_option("--bonus", action="store", type="float", default = 0.0)
+    parser.add_option("--bonus-reason", action="store", type="str", default="Great job!")
     parser.add_option("--accept", action="append", default = [])
     parser.add_option("--reject", action="append", default = [])
     parser.add_option("--validated", action="store_true", default = False)
@@ -124,7 +125,10 @@ def compensate(args):
                 if hit.accepted:
                     print "Accepted HIT {0}".format(hit.hitid)
                     if options.bonus > 0:
-                        hit.awardbonus(options.bonus, "Great job!")
+                        hit.awardbonus(options.bonus, options.bonus_reason)
+                        print "Awarded bonus to HIT {0}".format(hit.hitid)
+                    if hit.group.bonus > 0:
+                        hit.awardbonus(hit.group.bonus, "Great job!")
                         print "Awarded bonus to HIT {0}".format(hit.hitid)
                 else:
                     print "Rejected HIT {0}".format(hit.hitid)
