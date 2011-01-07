@@ -186,12 +186,33 @@ function mturk_showdonate(reward, bonus)
     var donation = $('<div id="turkic_donation"></div>').appendTo("body");
     donation.append(str);
 
+    var previous = document.cookie.match("(^|;) ?" + "turkic_donate" + "=([^;]*)(;|$)");
+    if (previous)
+    {
+        if (previous[2] == 1)
+        {
+            $("#turkic_donate_yes").attr("checked", true);
+        }
+        else
+        {
+            $("#turkic_donate_no").attr("checked", true);
+        }
+    }
+
     $("#turkic_donate_close").click(function() {
-        if (!$("#turkic_donate_yes").attr("checked") && !$("#turkic_donate_no").attr("checked"))
+        var donateyes = $("#turkic_donate_yes").attr("checked");
+        var donateno  = $("#turkic_donate_no").attr("checked");
+
+        if (!donateyes && !donateno)
         {
             window.alert("Please choose your donation option.");
             return;
         }
+
+        document.cookie = "turkic_donate=" + (donateyes ? 1 : 0);
+
+        // we need to reset the timestamp because the task doesnt start until they continue
+        turkic_timeaccepted = (new Date()).getTime();
 
         $("#turkic_overlay").hide();
         donation.hide();
