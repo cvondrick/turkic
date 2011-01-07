@@ -59,14 +59,13 @@
 #turkic_donation
 {
     width : 650;
-    height : 300px;
+    height : 350px;
     position : fixed;
-    top : 50%;
+    top : 100px;
     left : 50%;
-    margin-top : -150px;
     margin-left : -325px;
-    background-color : #EBFFEA;
-    border : 5px solid #035B00;
+    background-color : #EBF7FF;
+    border : 5px solid #0099FF;
     padding : 10px;
 }
 
@@ -91,6 +90,16 @@
 #turkic_donation label
 {
     padding-left : 5px;
+}
+
+#turkic_donation a
+{
+    color : blue;
+}
+
+#turkic_donation img a
+{
+    border : 0;
 }
 
 body

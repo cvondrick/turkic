@@ -86,43 +86,9 @@ function mturk_submit(callback)
         });
     }
 
-    server_workerstats(function(data) {
-        // ask for donation
-        $('<div id="turkic_overlay"></div>').appendTo("body");
-
-        var bonusamount = Math.round(data["bonus"] * 100) + "&cent;";
-
-        var str = '<h1>You have the option to donate your bonus.</h1>';
-        str += '<p>Congratulations! You have <strong>earned a ' + bonusamount + ' bonus</strong> as a reward for your hard work.</p>';
-        str += '<p>We are giving workers the option to donate their bonus to a charity. Instead of taking the ' + bonusamount + ' for yourself, consider donating it. ';
-        str += 'If every worker donates, together we can collectively donate <strong>hundreds of thousands of dollars</strong>. ';
-        str += 'If you choose to donate, we will pass your bonus on to Wikipedia to support open access to information on the web.</p>';
-        str += '<div style="margin-left : 20px;">';
-        str += '<input type="radio" id="turkic_donate_yes" name="turkic_donate_option">';
-        str += '<label for="turkic_donate_yes">Please donate this bonus to charity on my behalf.</label><br>';
-        str += '<input type="radio" id="turkic_donate_no" name="turkic_donate_option">';
-        str += '<label for="turkic_donate_no">I want to keep this bonus for myself.</label><br>';
-        str += '<input type="button" id="turkic_donate_submit" value="Submit HIT">';
-        str += '</div>';
-        str += '<p>If you would like to suggest a possible future charity, please do not hesistate to contact us.</p>';
-        var donation = $('<div id="turkic_donation"></div>').appendTo("body");
-        donation.append(str);
-
-        $("#turkic_donate_submit").click(function() {
-            var donateyes = $("#turkic_donate_yes").attr("checked");
-            var donateno = $("#turkic_donate_no").attr("checked");
-
-            if (!donateyes && !donateno)
-            {
-                window.alert("Please select your reward option.");
-                return;
-            }
-
-            var donateyes = donateyes ? 1 : 0;
-            server_request("turkic_savejobstats", [params.hitid, turkic_timeaccepted, now, donateyes], function() {
-                callback(redirect);
-            });
-        });
+    var donateyes = $("#turkic_donate_yes").attr("checked") ? 1 : 0;
+    server_request("turkic_savejobstats", [params.hitid, turkic_timeaccepted, now, donateyes], function() {
+        callback(redirect);
     });
 }
 
@@ -184,33 +150,53 @@ function mturk_showstatistics()
             st.append("<strong>Welcome new user!</strong> Please take a minute to read the instructions.");
         }
         stc.prependTo("body");
+
+        if (bonus > 0)
+        {
+            mturk_showdonate(amount, bonus);
+        }
     });
 }
 
-//function worker_showtraining()
-//{
-//    var tr = $('<div id="turkic_training"></div>');
-//    tr.appendTo("body");
-//}
-//
-//function worker_hidetraining()
-//{
-//    $("#turkic_training").remove();
-//}
-//
-//function worker_needstraining(iftrue, iffalse)
-//{
-//    server_workerstats(function(data) {
-//        if (data["newuser"])
-//        {
-//            iftrue(data);
-//        }
-//        else if (iffalse != null)
-//        {
-//            iffalse(data);
-//        }
-//    });
-//}
+function mturk_showdonate(reward, bonus)
+{
+    if ($("#turkic_donation").size())
+    {
+        $("#turkic_donation").show();
+        $("#turkic_overlay").show();
+        return;
+    }
+    
+    $('<div id="turkic_overlay"></div>').appendTo("body");
+
+    var str = '<h1>Do you want to work on behalf of charity?</h1>';
+    str += '<p>We are offering our users the ability to work on behalf of a charity. When your HIT is accepted, we will pay you both your standard compensation as well as a bonus. If you choose, we can donate your bonus to charity instead.</p>';
+    str += '<p>For this task, you are will receive ' + reward + '&cent; with an additional ' + bonus + '&cent; bonus. If you opt to donate, your HIT will be accepted and you will receive ' + reward + '&cent;, but we will donate ' + bonus + '&cent; to charity.</p>';
+    str += '<p>We urge you to consider donating. All proceeds will go <a href="http://www.unicef.org/" target="_blank">UNICEF</a> to fight world hunger. If every worker donates, we can collectively donate hundreds of thousands of dollars. Your actions can have an impact &mdash; all you must do is donate.</p>';
+    str += '<div style="margin-left : 20px;">';
+    str += '<a href="http://www.unicef.org/" target="_blank"><img src="http://www.unicef.org/images/unicef_logo.gif" align="right"></a>';
+    str += "<strong>Can we donate your bonus to fight world hunger?</strong><br>";
+    str += '<input type="radio" id="turkic_donate_yes" name="turkic_donate_option">';
+    str += '<label for="turkic_donate_yes">Yes, donate this bonus to UNICEF on my behalf.</label><br>';
+    str += '<input type="radio" id="turkic_donate_no" name="turkic_donate_option">';
+    str += '<label for="turkic_donate_no">No, I want to keep this bonus for myself.</label><br>';
+    //str += '<div style="float:right;"><input type="checkbox" id="turkic_donate_notagain"> <label for="turkic_donate_notagain">Do not show again</label></div>';
+    str += '<input type="button" id="turkic_donate_close" value="Continue">';
+    str += '</div>';
+    var donation = $('<div id="turkic_donation"></div>').appendTo("body");
+    donation.append(str);
+
+    $("#turkic_donate_close").click(function() {
+        if (!$("#turkic_donate_yes").attr("checked") && !$("#turkic_donate_no").attr("checked"))
+        {
+            window.alert("Please choose your donation option.");
+            return;
+        }
+
+        $("#turkic_overlay").hide();
+        donation.hide();
+    });
+}
 
 function server_geturl(action, parameters)
 {
