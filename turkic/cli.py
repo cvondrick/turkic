@@ -60,3 +60,4 @@ else:
     handler("Report job status")(cliutil.progress)
     handler("Launch work")(cliutil.publish)
     handler("Pay workers")(cliutil.compensate)
+    handler("Report status on donations")(cliutil.donation)

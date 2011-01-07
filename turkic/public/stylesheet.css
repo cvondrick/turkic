@@ -59,7 +59,7 @@
 #turkic_donation
 {
     width : 650;
-    height : 350px;
+    height : 360px;
     position : fixed;
     top : 100px;
     left : 50%;
@@ -100,6 +100,13 @@
 #turkic_donation img a
 {
     border : 0;
+}
+
+#turkic_donate_close
+{
+    font-weight : bold;
+    font-size : 16px;
+    padding : 5px 20px;
 }
 
 body

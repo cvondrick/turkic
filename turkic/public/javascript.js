@@ -169,9 +169,9 @@ function mturk_showdonate(reward, bonus)
     
     $('<div id="turkic_overlay"></div>').appendTo("body");
 
-    var str = '<h1>Do you want to work on behalf of charity?</h1>';
+    var str = '<h1>Do you want to help end world hunger?</h1>';
     str += '<p>We are offering our users the ability to work on behalf of a charity. When your HIT is accepted, we will pay you both your standard compensation as well as a bonus. If you choose, we can donate your bonus to charity instead.</p>';
-    str += '<p>For this task, you are will receive ' + reward + '&cent; with an additional ' + bonus + '&cent; bonus. If you opt to donate, your HIT will be accepted and you will receive ' + reward + '&cent;, but we will donate ' + bonus + '&cent; to charity.</p>';
+    str += '<p>For this HIT, you will receive ' + reward + '&cent; with an additional ' + bonus + '&cent; bonus. If you opt to donate, your HIT will be accepted and you will receive ' + reward + '&cent;, but we will donate your bonus to charity.</p>';
     str += '<p>We urge you to consider donating. All proceeds will go <a href="http://www.unicef.org/" target="_blank">UNICEF</a> to fight world hunger. If every worker donates, we can collectively donate hundreds of thousands of dollars. Your actions can have an impact &mdash; all you must do is donate.</p>';
     str += '<div style="margin-left : 20px;">';
     str += '<a href="http://www.unicef.org/" target="_blank"><img src="http://www.unicef.org/images/unicef_logo.gif" align="right"></a>';

@@ -101,8 +101,6 @@ def compensate(args):
     for f in options.reject:
         rejectkeys.extend(line.strip() for line in open(f))
         
-    totaldonation = 0.0;
-
     try:
         query = session.query(HIT)
         query = query.filter(HIT.completed == True)
@@ -128,7 +126,6 @@ def compensate(args):
                     print "Accepted HIT {0}".format(hit.hitid)
                     if hit.donatebonus:
                         print "Worker elected to donate bonus."
-                        totaldonation += hit.group.bonus
                     else:
                         if options.bonus > 0:
                             hit.awardbonus(options.bonus, options.bonus_reason)
@@ -140,7 +137,27 @@ def compensate(args):
                     print "Rejected HIT {0}".format(hit.hitid)
                 session.add(hit)
     finally:
-        print "Total donation: ${0:.2f}".format(totaldonation)
-
         session.commit()
+        session.close()
+
+def donation(args):
+    session = database.connect()
+
+    try:
+        donateyes = session.query(HIT)
+        donateyes = donateyes.filter(HIT.donatebonus == True)
+        donateyes = donateyes.filter(HIT.completed == True)
+        donateyes = donateyes.count()
+
+        donateno = session.query(HIT)
+        donateno = donateno.filter(HIT.donatebonus == False)
+        donateno = donateno.filter(HIT.completed == True)
+        donateno = donateno.count()
+
+        donatetotal = donateyes + donateno
+
+        print "{0:>5} total HITs completed".format(donatetotal)
+        print "{0:>5} times the worker elected to donate".format(donateyes)
+        print "{0:>5} times the worker opted to receive bonus".format(donateno)
+    finally:
         session.close()
