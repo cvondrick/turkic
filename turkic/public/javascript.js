@@ -214,8 +214,8 @@ function mturk_showdonate(reward, bonus)
         // we need to reset the timestamp because the task doesnt start until they continue
         turkic_timeaccepted = (new Date()).getTime();
 
-        $("#turkic_overlay").fadeOut();
-        donation.slideUp();
+        $("#turkic_overlay").hide();
+        donation.hide();
     });
 }
 
