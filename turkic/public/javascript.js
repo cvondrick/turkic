@@ -195,10 +195,9 @@ function mturk_showdonate(reward, bonus)
     var donation = $('<div id="turkic_donation"></div>').appendTo("body");
     donation.append(str);
 
-    var previous = document.cookie.match("(^|;) ?" + "turkic_donate" + "=([^;]*)(;|$)");
-    if (previous)
+    if ($.cookie("turkic_charity_previous") != null)
     {
-        if (previous[2] == 1)
+        if ($.cookie("turkic_charity_previous") == 1)
         {
             $("#turkic_donate_yes").attr("checked", true);
         }
@@ -218,7 +217,7 @@ function mturk_showdonate(reward, bonus)
             return;
         }
 
-        document.cookie = "turkic_donate=" + (donateyes ? 1 : 0);
+        $.cookie("turkic_charity_previous", donateyes ? 1 : 0);
 
         // we need to reset the timestamp because the task doesnt start until they continue
         turkic_timeaccepted = (new Date()).getTime();
