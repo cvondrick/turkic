@@ -6,9 +6,9 @@ with 'turkic [command] [arguments]' from the shell.
 """
 
 import sys
+import database
 import argparse
-import cliutil
-from turkic.models import HITGroup
+from turkic.models import *
 
 handlers = {}
 
@@ -28,8 +28,16 @@ def handler(help = "", inname = None):
         return func
     return decorator
 
-class LoadCommand(object):
+class Command(object):
+    def __init__(self, args):
+        self(self.setup().parse_args(args))
+
     def __call__(self, args):
+        raise NotImplementedError("__call__() must be defined") 
+
+class LoadCommand(object):
+    def __init__(self, args):
+        args = self.setup().parse_args(args)
         group = HITGroup(title = args.title.format(c = args.plural),
                         description = args.description.format(c = args.plural),
                         duration = args.duration,
@@ -37,10 +45,10 @@ class LoadCommand(object):
                         cost = args.cost,
                         bonus = args.bonus,
                         keywords = args.keywords)
-        self.load(self, args, group)
+        self(args, group)
 
-    def load(self, args, group):
-        raise NotImplementedError("load() must be defined") 
+    def __call__(self, args, group):
+        raise NotImplementedError("__call__() must be defined") 
 
 importparser = argparse.ArgumentParser(add_help=False)
 importparser.add_argument("--title", default = "Image annotation of {c}")
@@ -68,15 +76,7 @@ def main(args = None):
         except KeyError:
             print "Error: Unknown action {0}".format(args[0])
         else:
-            try:
-                handler.setup
-            except AttributeError:
-                handler(args[1:])
-            else:
-                handlerinst = handler()
-                parser = handlerinst.setup()
-                parser.prog = args[0]
-                handlerinst(parser.parse_args(args[1:]))
+            handler(args[1:])
 
 def help(args = None):
     """
@@ -85,12 +85,167 @@ def help(args = None):
     for action, (_, help) in sorted(handlers.items()):
         print "{0:>15}   {1:<50}".format(action, help)
 
+def init(args):
+    try:
+        args[0]
+    except IndexError:
+        print "Error: Expected argument."
+        return
+
+    skeleton = os.path.dirname(__file__) + "/skeleton"
+    target = os.getcwd() + "/" + args[0]
+
+    if os.path.exists(target):
+        print "{0} already exists".format(target)
+        return
+
+    shutil.copytree(skeleton, target);
+
+    for file in glob.glob(target + "/*.pyc"):
+        os.remove(file)
+
+    public = os.path.dirname(__file__) + "/public"
+    os.symlink(public, target + "/public/turkic")
+
+    print "Initialized new project: {0}".format(args[0]);
+
+def progress(args):
+    session = database.connect()
+    balance = api.server.balance
+
+    try:
+        available = session.query(HIT).count()
+        published = session.query(HIT).filter(HIT.published == True).count()
+        completed = session.query(HIT).filter(HIT.completed == True).count()
+        compensated = session.query(HIT).filter(HIT.compensated == True).count()
+
+        print "Server Configuration:"
+        print "  Sandbox:     {0}".format("True" if config.sandbox else "False")
+        print "  Database:    {0}".format(config.database)
+        print "  Localhost:   {0}".format(config.localhost)
+        print ""
+
+        print "Mechanical Turk Status:"
+        print "  Balance:     ${0:.2f}".format(balance)
+        print ""
+
+        print "Server Status:"
+        print "  Available:   {0}".format(available)
+        print "  Published:   {0}".format(published)
+        print "  Completed:   {0}".format(completed)
+        print "  Remaining:   {0}".format(published - completed)
+        print "  Compensated: {0}".format(compensated)
+
+    finally:
+        session.close()
+
+class publish(Command):
+    def setup(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--limit", type=int, default = 0)
+        return parser
+
+    def __call__(self, args):
+        session = database.connect()
+
+        try:
+            query = session.query(HIT)
+            query = query.filter(HIT.published == False)
+            if args.limit > 0:
+                query = query.limit(args.limit)
+
+            for hit in query:
+                hit.publish()
+                session.add(hit)
+                print "Published {0}".format(hit.hitid)
+
+        finally:
+            session.commit()
+            session.close()
+
+class compensate(Command):
+    def setup(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--bonus", type=float, default = 0.0)
+        parser.add_argument("--bonus-reason", default = "Great job!")
+        parser.add_argument("--accept", action="append", default = [])
+        parser.add_argument("--reject", action="append", default = [])
+        parser.add_argument("--validated", action = "store_true")
+        parser.add_argument("--default", default="defer",
+            choices=["accept", "reject", "defer"])
+        return parser
+
+    def __call__(self, args):
+        session = database.connect()
+
+        acceptkeys = []
+        rejectkeys = []
+        for f in args.accept:
+            acceptkeys.extend(line.strip() for line in open(f))
+        for f in args.reject:
+            rejectkeys.extend(line.strip() for line in open(f))
+            
+        try:
+            query = session.query(HIT)
+            query = query.filter(HIT.completed == True)
+            query = query.filter(HIT.compensated == False)
+
+            for hit in query:
+                if hit.validated and args.validated:
+                    if hit.accepted:
+                        hit.accept()
+                    else:
+                        hit.reject()
+                elif hit.assignmentid in acceptkeys:
+                    hit.accept()
+                elif hit.assignmentid in rejectkeys:
+                    hit.reject()
+                elif args.default == "accept":
+                    hit.accept()
+                elif args.default == "reject":
+                    hit.reject()
+
+                if hit.compensated:
+                    if hit.accepted:
+                        print "Accepted HIT {0}".format(hit.hitid)
+                        if args.bonus > 0:
+                            hit.awardbonus(args.bonus, args.bonus_reason)
+                            print "Awarded bonus to HIT {0}".format(hit.hitid)
+                        if hit.group.bonus > 0:
+                            hit.awardbonus(hit.group.bonus, "Great job!")
+                            print "Awarded bonus to HIT {0}".format(hit.hitid)
+                    else:
+                        print "Rejected HIT {0}".format(hit.hitid)
+                    session.add(hit)
+        finally:
+            session.commit()
+            session.close()
+
+def setupdb(args):
+    import models
+    import turkic.models
+
+    if "--reset" in args:
+        if "--no-confirm" in args:
+            database.reinstall()
+            print "Reinstalled."
+        else:
+            resp = raw_input("Reset database? ").lower()
+            if resp in ["yes", "y"]:
+                database.reinstall()
+                print "Reinstalled."
+            else:
+                print "Aborted."
+    else:
+        database.install()
+        print "Installed."
+
 try:
     import config
 except ImportError:
-    handler("Start a new project")(cliutil.init)
+    handler("Start a new project")(init)
 else:
-    handler("Report job status")(cliutil.progress)
-    handler("Launch work")(cliutil.publish)
-    handler("Pay workers")(cliutil.compensate)
-    handler("Setup the database")(cliutil.setupdb)
+    handler("Report job status")(progress)
+    handler("Launch work")(publish)
+    handler("Pay workers")(compensate)
+    handler("Setup the database")(setupdb)
