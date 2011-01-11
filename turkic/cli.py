@@ -31,7 +31,9 @@ def handler(help = "", inname = None):
 
 class Command(object):
     def __init__(self, args):
-        self(self.setup().parse_args(args))
+        parser = self.setup()
+        parser.prog = "turkic {0}".format(sys.argv[1])
+        self(parser.parse_args(args))
 
     def setup(self):
         return argparse.ArgumentParser()
