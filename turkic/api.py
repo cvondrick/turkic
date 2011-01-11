@@ -132,7 +132,7 @@ class Server(object):
         """
         Sends an email to the worker.
         """
-        r = self.request("NotifyWorkers", {"Subject": subject, "Message": message, "WorkerId.1": workerid})
+        r = self.request("NotifyWorkers", {"Subject": subject, "MessageText": message, "WorkerId.1": workerid})
         r.validate("NotifyWorkersResult/Request/IsValid", "NotifyWorkersResult/Request/Errors/Error/Message")
         return r
 
