@@ -45,7 +45,7 @@ class Server(object):
         conn.close()
         return response
 
-    def createhit(self, title, description, page, amount, duration, lifetime, keywords = "", height = 650):
+    def createhit(self, title, description, page, amount, duration, lifetime, keywords = "", autoapprove = 604800, height = 650):
         """
         Creates a HIT on Mechanical Turk.
         
@@ -61,6 +61,7 @@ class Server(object):
             "Reward.1.Amount": amount,
             "Reward.1.CurrencyCode": "USD",
             "AssignmentDurationInSeconds": duration,
+            "AutoApprovalDelayInSeconds": autoapprove,
             "LifetimeInSeconds": lifetime}
 
         r["Question"] = "<ExternalQuestion xmlns=\"http://mechanicalturk.amazonaws.com/AWSMechanicalTurkDataSchemas/2006-07-14/ExternalQuestion.xsd\">" +\
@@ -117,6 +118,14 @@ class Server(object):
         """
         r = self.request("UnblockWorker", {"WorkerId": workerid, "Reason": reason})
         r.validate("UnblockWorkerResult/Request/IsValid", "UnblockWorkerResult/Request/Errors/Error/Message")
+        return r
+
+    def email(self, workerid, subject, message):
+        """
+        Sends an email to the worker.
+        """
+        r = self.request("NotifyWorkers", {"Subject": subject, "Message": message, "WorkerId.1": workerid})
+        r.validate("NotifyWorkersResult/Request/IsValid", "NotifyWorkersResult/Request/Errors/Error/Message")
         return r
 
     @property
