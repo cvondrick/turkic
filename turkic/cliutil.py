@@ -161,3 +161,22 @@ def donation(args):
         print "{0:>5} times the worker opted to receive bonus".format(donateno)
     finally:
         session.close()
+
+def setupdb(args):
+    import models
+    import turkic.models
+
+    if "--reset" in args:
+        if "--no-confirm" in args:
+            database.reinstall()
+            print "Reinstalled."
+        else:
+            resp = raw_input("Reset database? ").lower()
+            if resp in ["yes", "y"]:
+                database.reinstall()
+                print "Reinstalled."
+            else:
+                print "Aborted."
+    else:
+        database.install()
+        print "Installed."

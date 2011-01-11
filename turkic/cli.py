@@ -61,3 +61,4 @@ else:
     handler("Launch work")(cliutil.publish)
     handler("Pay workers")(cliutil.compensate)
     handler("Report status on donations")(cliutil.donation)
+    handler("Setup the database")(cliutil.setupdb)
