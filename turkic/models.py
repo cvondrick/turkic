@@ -34,6 +34,9 @@ class Worker(database.Base):
     def unblock(self):
         api.server.unblock(self.id)
 
+    def email(self, subject, message):
+        api.server.email(self.id, subject, message)
+
     @classmethod
     def lookup(self, session, workerid):
         worker = session.query(Worker)

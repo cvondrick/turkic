@@ -120,6 +120,14 @@ class Server(object):
         r.validate("UnblockWorkerResult/Request/IsValid", "UnblockWorkerResult/Request/Errors/Error/Message")
         return r
 
+    def email(self, workerid, subject, message):
+        """
+        Sends an email to the worker.
+        """
+        r = self.request("NotifyWorkers", {"Subject": subject, "Message": message, "WorkerId.1": workerid})
+        r.validate("NotifyWorkersResult/Request/IsValid", "NotifyWorkersResult/Request/Errors/Error/Message")
+        return r
+
     @property
     def balance(self):
         """
