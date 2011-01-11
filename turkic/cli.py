@@ -31,15 +31,13 @@ def handler(help = "", inname = None):
 
 class Command(object):
     def __init__(self, args):
-        try:
-            self.setup
-        except:
-            self(args)
-        else:
-            self(self.setup().parse_args(args))
+        self(self.setup().parse_args(args))
+
+    def setup(self):
+        return argparse.ArgumentParser()
 
     def __call__(self, args):
-        return argparse.ArgumentParser()
+        raise NotImplementedError("__call__() must be defined")
 
 class LoadCommand(object):
     def __init__(self, args):
@@ -261,8 +259,8 @@ class compensate(Command):
                     if hit.compensated:
                         self.awardbonus(hit, args.bonus, args.bonus_reason)
                         session.add(hit)
-                except CommunicationError:
-                    print "Error with HIT {0}".format(hit.hitid)
+                except CommunicationError as e:
+                    print "Error with HIT {0}: {1}".format(hit.hitid, e)
         finally:
             session.commit()
             session.close()
