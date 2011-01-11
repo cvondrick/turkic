@@ -349,4 +349,4 @@ else:
     handler("Launch work")(publish)
     handler("Pay workers")(compensate)
     handler("Setup the database")(setupdb)
-    handler("Report status on donations")(cliutil.donation)
+    handler("Report status on donations")(donation)
