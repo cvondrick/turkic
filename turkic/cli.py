@@ -31,7 +31,12 @@ def handler(help = "", inname = None):
 
 class Command(object):
     def __init__(self, args):
-        self(self.setup().parse_args(args))
+        try:
+            self.setup
+        except:
+            self(args)
+        else:
+            self(self.setup().parse_args(args))
 
     def __call__(self, args):
         return argparse.ArgumentParser()
