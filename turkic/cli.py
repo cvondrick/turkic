@@ -8,6 +8,7 @@ with 'turkic [command] [arguments]' from the shell.
 import sys
 import database
 import argparse
+from turkic.api import CommunicationError
 from turkic.models import *
 
 handlers = {}
@@ -191,32 +192,35 @@ class compensate(Command):
             query = query.filter(HIT.compensated == False)
 
             for hit in query:
-                if hit.validated and args.validated:
-                    if hit.accepted:
+                try:
+                    if hit.validated and args.validated:
+                        if hit.accepted:
+                            hit.accept()
+                        else:
+                            hit.reject()
+                    elif hit.assignmentid in acceptkeys:
                         hit.accept()
-                    else:
+                    elif hit.assignmentid in rejectkeys:
                         hit.reject()
-                elif hit.assignmentid in acceptkeys:
-                    hit.accept()
-                elif hit.assignmentid in rejectkeys:
-                    hit.reject()
-                elif args.default == "accept":
-                    hit.accept()
-                elif args.default == "reject":
-                    hit.reject()
+                    elif args.default == "accept":
+                        hit.accept()
+                    elif args.default == "reject":
+                        hit.reject()
 
-                if hit.compensated:
-                    if hit.accepted:
-                        print "Accepted HIT {0}".format(hit.hitid)
-                        if args.bonus > 0:
-                            hit.awardbonus(args.bonus, args.bonus_reason)
-                            print "Awarded bonus to HIT {0}".format(hit.hitid)
-                        if hit.group.bonus > 0:
-                            hit.awardbonus(hit.group.bonus, "Great job!")
-                            print "Awarded bonus to HIT {0}".format(hit.hitid)
-                    else:
-                        print "Rejected HIT {0}".format(hit.hitid)
-                    session.add(hit)
+                    if hit.compensated:
+                        if hit.accepted:
+                            print "Accepted HIT {0}".format(hit.hitid)
+                            if args.bonus > 0:
+                                hit.awardbonus(args.bonus, args.bonus_reason)
+                                print "Awarded bonus to HIT {0}".format(hit.hitid)
+                            if hit.group.bonus > 0:
+                                hit.awardbonus(hit.group.bonus, "Great job!")
+                                print "Awarded bonus to HIT {0}".format(hit.hitid)
+                        else:
+                            print "Rejected HIT {0}".format(hit.hitid)
+                        session.add(hit)
+                except CommunicationError:
+                    print "Error with HIT {0}".format(hit.hitid)
         finally:
             session.commit()
             session.close()
