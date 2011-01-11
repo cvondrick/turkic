@@ -7,6 +7,7 @@ decorator.
 """
 
 import sys
+import argparse
 import cliutil
 
 handlers = {}
@@ -23,9 +24,19 @@ def handler(help = "", inname = None):
             name = func.__name__
         else:
             name = inname
-        handlers[name] = func, help
+        handlers[name.lower()] = func, help
         return func
     return decorator
+
+importparser = argparse.ArgumentParser(add_help=False)
+importparser.add_argument("--title", default = "Image annotation of {c}")
+importparser.add_argument("--description", 
+    default = "Draw boxes around {c} in this image.")
+importparser.add_argument("--cost", "-c", type=float, default = 0.02)
+importparser.add_argument("--duration", type=int, default = 600)
+importparser.add_argument("--lifetime", type=int, default = 1209600)
+importparser.add_argument("--keywords", default = "")
+importparser.add_argument("--bonus", "-b", type=float, default = 0.00)
 
 def main(args = None):
     """
@@ -43,7 +54,15 @@ def main(args = None):
         except KeyError:
             print "Error: Unknown action {0}".format(args[0])
         else:
-            handler(args[1:])
+            try:
+                handler.setup
+            except AttributeError:
+                handler(args[1:])
+            else:
+                handlerinst = handler()
+                parser = handlerinst.setup()
+                parser.prog = "turkic {0}".format(args[0])
+                handlerinst(parser.parse_args(args[1:]))
 
 def help(args = None):
     """
