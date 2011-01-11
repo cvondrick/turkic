@@ -12,7 +12,7 @@ setup(
     author_email = "cvondric@ics.uci.edu",
     description = "A framework for Mechanical Turk HITs",
     license = "MIT",
-    version = "0.1.0",
+    version = "0.0.1",
     classifiers = ['Development Status :: 1 - Planning',
                    'Intended Audience :: Developers'],
     packages = ["turkic"],
