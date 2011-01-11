@@ -116,8 +116,13 @@ class init(Command):
         print "Initialized new project: {0}".format(args.name);
 
 class status(Command):
+    def setup(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--turk", action = "store_true")
+        return parser
+
     def serverconfig(self, session):
-        print "Server Configuration:"
+        print "Configuration:"
         print "  Sandbox:     {0}".format("True" if config.sandbox else "False")
         print "  Database:    {0}".format(config.database)
         print "  Localhost:   {0}".format(config.localhost)
@@ -126,6 +131,10 @@ class status(Command):
     def turkstatus(self, session):
         print "Mechanical Turk Status:"
         print "  Balance:     ${0:.2f}".format(api.server.balance)
+        print "  Net Payout:  ${0:.2f}".format(api.server.rewardpayout)
+        print "  Net Fees:    ${0:.2f}".format(api.server.feepayout)
+        print "  Num Created: {0}".format(api.server.numcreated)
+        print "  Approved:    {0:.2f}%".format(api.server.approvalpercentage)
         print ""
 
     def serverstatus(self, session):
@@ -134,7 +143,7 @@ class status(Command):
         completed = session.query(HIT).filter(HIT.completed == True).count()
         compensated = session.query(HIT).filter(HIT.compensated == True).count()
 
-        print "Server Status:"
+        print "Status:"
         print "  Available:   {0}".format(available)
         print "  Published:   {0}".format(published)
         print "  Completed:   {0}".format(completed)
@@ -145,7 +154,8 @@ class status(Command):
         session = database.connect()
         try:
             self.serverconfig(session)
-            self.turkstatus(session)
+            if args.turk:
+                self.turkstatus(session)
             self.serverstatus(session)
         finally:
             session.close()
