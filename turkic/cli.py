@@ -140,13 +140,23 @@ class status(Command):
         published = session.query(HIT).filter(HIT.published == True).count()
         completed = session.query(HIT).filter(HIT.completed == True).count()
         compensated = session.query(HIT).filter(HIT.compensated == True).count()
+        remaining = published - completed
 
         print "Status:"
         print "  Available:   {0}".format(available)
         print "  Published:   {0}".format(published)
         print "  Completed:   {0}".format(completed)
         print "  Compensated: {0}".format(compensated)
-        print "  Remaining:   {0}".format(published - completed)
+        print "  Remaining:   {0}".format(remaining)
+        print ""
+
+        if remaining > 0:
+            print "Server is ONLINE and accepting work!"
+        else:
+            if compensated == completed:
+                print "Server is offline."
+            else:
+                print "Server is offline, but some workers are not compensated."
         
     def __call__(self, args):
         session = database.connect()
