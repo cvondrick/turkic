@@ -289,7 +289,7 @@ class setupdb(Command):
         import turkic.models
 
         if args.reset:
-            if rgs.no_confirm:
+            if args.no_confirm:
                 database.reinstall()
                 print "Database reset!"
             else:
