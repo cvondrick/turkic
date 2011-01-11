@@ -191,6 +191,8 @@ class compensate(Command):
             query = query.filter(HIT.completed == True)
             query = query.filter(HIT.compensated == False)
 
+            donationtotals = {}
+
             for hit in query:
                 try:
                     if hit.validated and args.validated:
@@ -210,12 +212,15 @@ class compensate(Command):
                     if hit.compensated:
                         if hit.accepted:
                             print "Accepted HIT {0}".format(hit.hitid)
-                            if args.bonus > 0:
-                                hit.awardbonus(args.bonus, args.bonus_reason)
-                                print "Awarded bonus to HIT {0}".format(hit.hitid)
-                            if hit.group.bonus > 0:
-                                hit.awardbonus(hit.group.bonus, "Great job!")
-                                print "Awarded bonus to HIT {0}".format(hit.hitid)
+                            if hit.donatebonus:
+                                print "Worker elected to donate bonus."
+                            else:
+                                if args.bonus > 0:
+                                    hit.awardbonus(args.bonus, args.bonus_reason)
+                                    print "Awarded bonus to HIT {0}".format(hit.hitid)
+                                if hit.group.bonus > 0:
+                                    hit.awardbonus(hit.group.bonus, "Great job!")
+                                    print "Awarded bonus to HIT {0}".format(hit.hitid)
                         else:
                             print "Rejected HIT {0}".format(hit.hitid)
                         session.add(hit)
