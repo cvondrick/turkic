@@ -1,14 +1,14 @@
 """
 A lightweight cli framework.
 
-To use this module, import the 'application function', which will dispatch commands
-based on handlers. To define a handler, decorate a function with the 'handler'
-decorator.
+To use this module, decorate functions with the 'handler' decorator. Then, call
+with 'turkic [command] [arguments]' from the shell.
 """
 
 import sys
 import argparse
 import cliutil
+from turkic.models import HITGroup
 
 handlers = {}
 
@@ -27,6 +27,20 @@ def handler(help = "", inname = None):
         handlers[name.lower()] = func, help
         return func
     return decorator
+
+class LoadCommand(object):
+    def __call__(self, args):
+        group = HITGroup(title = args.title.format(c = args.plural),
+                        description = args.description.format(c = args.plural),
+                        duration = args.duration,
+                        lifetime = args.lifetime,
+                        cost = args.cost,
+                        bonus = args.bonus,
+                        keywords = args.keywords)
+        self.load(self, args, group)
+
+    def load(self, args, group):
+        raise NotImplementedError("load() must be defined") 
 
 importparser = argparse.ArgumentParser(add_help=False)
 importparser.add_argument("--title", default = "Image annotation of {c}")
@@ -61,7 +75,7 @@ def main(args = None):
             else:
                 handlerinst = handler()
                 parser = handlerinst.setup()
-                parser.prog = "turkic {0}".format(args[0])
+                parser.prog = args[0]
                 handlerinst(parser.parse_args(args[1:]))
 
 def help(args = None):
