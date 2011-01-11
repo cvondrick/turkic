@@ -74,6 +74,14 @@ class Server(object):
         r.store("HIT/HITId", "hitid")
         r.store("HIT/HITTypeId", "hittypeid")
         return r
+    
+    def disable(self, hitid):
+        """
+        Disables the HIT from the MTurk service.
+        """
+        r = self.request("DisableHIT", {"HITId": hitid})
+        r.validate("DisableHITResult/Request/IsValid", "DisableHITResult/Request/Errors/Error/Message")
+        return r
 
     def accept(self, assignmentid, feedback = ""):
         """
@@ -128,6 +136,16 @@ class Server(object):
         r.validate("NotifyWorkersResult/Request/IsValid", "NotifyWorkersResult/Request/Errors/Error/Message")
         return r
 
+    def getstatistic(self, statistic, type, timeperiod = "LifeToDate"):
+        """
+        Returns the total reward payout.
+        """
+        r = self.request("GetRequesterStatistic", {"Statistic": statistic, "TimePeriod": timeperiod})
+        r.validate("GetStatisticResult/Request/IsValid")
+        xmlvalue = "LongValue" if type is int else "DoubleValue"
+        r.store("GetStatisticResult/DataPoint/{0}".format(xmlvalue), "value", type)
+        return r.value
+
     @property
     def balance(self):
         """
@@ -138,6 +156,36 @@ class Server(object):
         r.store("GetAccountBalanceResult/AvailableBalance/Amount", "amount", float)
         r.store("GetAccountBalanceResult/AvailableBalance/CurrencyCode", "currency")
         return r.amount
+
+    @property
+    def rewardpayout(self):
+        """
+        Returns the total reward payout.
+        """
+        return self.getstatistic("TotalRewardPayout", float)
+
+    @property
+    def approvalpercentage(self):
+        """
+        Returns the percent of assignments approved.
+        """
+        return self.getstatistic("PercentAssignmentsApproved", float)
+
+    @property
+    def feepayout(self):
+        """
+        Returns how much we paid to Amazon in fees.
+        """
+        reward = self.getstatistic("TotalRewardFeePayout", float)
+        bonus = self.getstatistic("TotalBonusFeePayout", float)
+        return reward + bonus
+
+    @property
+    def numcreated(self):
+        """
+        Returns the total number of HITs created.
+        """
+        return self.getstatistic("NumberHITsCreated", int)
 
 class Response(object):
     """
@@ -165,7 +213,8 @@ class Response(object):
             if errormessage:
                 errormessage = self.tree.find(errormessage)
                 if errormessage is None:
-                    raise CommunicationError("Response not valid and XML malformed", self)
+                    raise CommunicationError("Response not valid "
+                        "and XML malformed", self)
                 raise CommunicationError(errormessage.text.strip(), self)
             else:
                 raise CommunicationError("Response not valid", self)
@@ -176,7 +225,8 @@ class Response(object):
         """
         node = self.tree.find(path)
         if node is None:
-            raise CommunicationError("XML malformed (cannot find {0})".format(path))
+            raise CommunicationError("XML malformed "
+                "(cannot find {0})".format(path), self)
         self.values[name] = type(node.text.strip())
 
     def __getattr__(self, name):

@@ -31,10 +31,15 @@ def handler(help = "", inname = None):
 
 class Command(object):
     def __init__(self, args):
-        self(self.setup().parse_args(args))
+        parser = self.setup()
+        parser.prog = "turkic {0}".format(sys.argv[1])
+        self(parser.parse_args(args))
+
+    def setup(self):
+        return argparse.ArgumentParser()
 
     def __call__(self, args):
-        raise NotImplementedError("__call__() must be defined") 
+        raise NotImplementedError("__call__() must be defined")
 
 class LoadCommand(object):
     def __init__(self, args):
@@ -86,80 +91,121 @@ def help(args = None):
     for action, (_, help) in sorted(handlers.items()):
         print "{0:>15}   {1:<50}".format(action, help)
 
-def init(args):
-    try:
-        args[0]
-    except IndexError:
-        print "Error: Expected argument."
-        return
+class init(Command):
+    def setup(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument("name")
+        return parser
 
-    skeleton = os.path.dirname(__file__) + "/skeleton"
-    target = os.getcwd() + "/" + args[0]
+    def __call__(self, args):
+        skeleton = os.path.dirname(__file__) + "/skeleton"
+        target = os.getcwd() + "/" + args.name
 
-    if os.path.exists(target):
-        print "{0} already exists".format(target)
-        return
+        if os.path.exists(target):
+            print "{0} already exists".format(target)
+            return
 
-    shutil.copytree(skeleton, target);
+        shutil.copytree(skeleton, target);
 
-    for file in glob.glob(target + "/*.pyc"):
-        os.remove(file)
+        for file in glob.glob(target + "/*.pyc"):
+            os.remove(file)
 
-    public = os.path.dirname(__file__) + "/public"
-    os.symlink(public, target + "/public/turkic")
+        public = os.path.dirname(__file__) + "/public"
+        os.symlink(public, target + "/public/turkic")
 
-    print "Initialized new project: {0}".format(args[0]);
+        print "Initialized new project: {0}".format(args.name);
 
-def progress(args):
-    session = database.connect()
-    balance = api.server.balance
+class status(Command):
+    def setup(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--turk", action = "store_true")
+        return parser
 
-    try:
-        available = session.query(HIT).count()
-        published = session.query(HIT).filter(HIT.published == True).count()
-        completed = session.query(HIT).filter(HIT.completed == True).count()
-        compensated = session.query(HIT).filter(HIT.compensated == True).count()
-
-        print "Server Configuration:"
+    def serverconfig(self, session):
+        print "Configuration:"
         print "  Sandbox:     {0}".format("True" if config.sandbox else "False")
         print "  Database:    {0}".format(config.database)
         print "  Localhost:   {0}".format(config.localhost)
         print ""
 
+    def turkstatus(self, session):
         print "Mechanical Turk Status:"
-        print "  Balance:     ${0:.2f}".format(balance)
+        print "  Balance:     ${0:.2f}".format(api.server.balance)
+        print "  Net Payout:  ${0:.2f}".format(api.server.rewardpayout)
+        print "  Net Fees:    ${0:.2f}".format(api.server.feepayout)
+        print "  Num Created: {0}".format(api.server.numcreated)
+        print "  Approved:    {0:.2f}%".format(api.server.approvalpercentage)
         print ""
 
-        print "Server Status:"
+    def serverstatus(self, session):
+        available = session.query(HIT).count()
+        published = session.query(HIT).filter(HIT.published == True).count()
+        completed = session.query(HIT).filter(HIT.completed == True).count()
+        compensated = session.query(HIT).filter(HIT.compensated == True).count()
+        remaining = published - completed
+
+        print "Status:"
         print "  Available:   {0}".format(available)
         print "  Published:   {0}".format(published)
         print "  Completed:   {0}".format(completed)
-        print "  Remaining:   {0}".format(published - completed)
         print "  Compensated: {0}".format(compensated)
+        print "  Remaining:   {0}".format(remaining)
+        print ""
 
-    finally:
-        session.close()
+        if remaining > 0:
+            print "Server is ONLINE and accepting work!"
+        else:
+            if compensated == completed:
+                print "Server is offline."
+            else:
+                print "Server is offline, but some workers are not compensated."
+        
+    def __call__(self, args):
+        session = database.connect()
+        try:
+            self.serverconfig(session)
+            if args.turk:
+                self.turkstatus(session)
+            self.serverstatus(session)
+        finally:
+            session.close()
 
 class publish(Command):
     def setup(self):
         parser = argparse.ArgumentParser()
         parser.add_argument("--limit", type=int, default = 0)
+        parser.add_argument("--disable", action="store_true")
         return parser
+
+    def publish(self, hit):
+        hit.publish()
+        print "Published {0}".format(hit.hitid)
+
+    def disable(self, hit):
+        hitid = hit.disable()
+        print "Disabled {0}".format(hitid)
 
     def __call__(self, args):
         session = database.connect()
-
         try:
             query = session.query(HIT)
-            query = query.filter(HIT.published == False)
-            if args.limit > 0:
-                query = query.limit(args.limit)
+            if args.disable:
+                query = query.filter(HIT.published == True)
+                query = query.filter(HIT.completed == False)
+                if args.limit > 0:
+                    query = query.limit(args.limit)
 
-            for hit in query:
-                hit.publish()
-                session.add(hit)
-                print "Published {0}".format(hit.hitid)
+                for hit in query:
+                    self.disable(hit)
+                    session.add(hit)
+            else:
+                query = query.filter(HIT.published == False)
+                if args.limit > 0:
+                    query = query.limit(args.limit)
 
+                for hit in query:
+                    self.publish(hit)
+                    session.add(hit)
         finally:
             session.commit()
             session.close()
@@ -175,6 +221,33 @@ class compensate(Command):
         parser.add_argument("--default", default="defer",
             choices=["accept", "reject", "defer"])
         return parser
+
+    def process(self, hit, acceptkeys, rejectkeys, validated, default):
+        if hit.validated and validated:
+            if hit.accepted:
+                hit.accept()
+            else:
+                hit.reject()
+        elif hit.assignmentid in acceptkeys:
+            hit.accept()
+        elif hit.assignmentid in rejectkeys:
+            hit.reject()
+        elif default == "accept":
+            hit.accept()
+        elif default == "reject":
+            hit.reject()
+
+    def awardbonus(self, hit, bonus, bonus_reason):
+        if hit.accepted:
+            print "Accepted HIT {0}".format(hit.hitid)
+            if bonus > 0:
+                hit.awardbonus(bonus, bonus_reason)
+                print "Awarded bonus to HIT {0}".format(hit.hitid)
+            if hit.group.bonus > 0:
+                hit.awardbonus(hit.group.bonus, "Great job!")
+                print "Awarded bonus to HIT {0}".format(hit.hitid)
+        else:
+            print "Rejected HIT {0}".format(hit.hitid)
 
     def __call__(self, args):
         session = database.connect()
@@ -195,20 +268,8 @@ class compensate(Command):
 
             for hit in query:
                 try:
-                    if hit.validated and args.validated:
-                        if hit.accepted:
-                            hit.accept()
-                        else:
-                            hit.reject()
-                    elif hit.assignmentid in acceptkeys:
-                        hit.accept()
-                    elif hit.assignmentid in rejectkeys:
-                        hit.reject()
-                    elif args.default == "accept":
-                        hit.accept()
-                    elif args.default == "reject":
-                        hit.reject()
-
+                    self.process(hit, acceptkeys, rejectkeys,
+                        args.validated, args.default)
                     if hit.compensated:
                         if hit.accepted:
                             print "Accepted HIT {0}".format(hit.hitid)
@@ -223,60 +284,68 @@ class compensate(Command):
                                     print "Awarded bonus to HIT {0}".format(hit.hitid)
                         else:
                             print "Rejected HIT {0}".format(hit.hitid)
+                        self.awardbonus(hit, args.bonus, args.bonus_reason)
                         session.add(hit)
-                except CommunicationError:
-                    print "Error with HIT {0}".format(hit.hitid)
+                except CommunicationError as e:
+                    print "Error with HIT {0}: {1}".format(hit.hitid, e)
         finally:
             session.commit()
             session.close()
 
-def donation(args):
-    session = database.connect()
+class donation(Command):
+    def __call__(self, args):
+        session = database.connect()
+        try:
+            donateyes = session.query(HIT)
+            donateyes = donateyes.filter(HIT.donatebonus == True)
+            donateyes = donateyes.filter(HIT.completed == True)
+            donateyes = donateyes.count()
 
-    try:
-        donateyes = session.query(HIT)
-        donateyes = donateyes.filter(HIT.donatebonus == True)
-        donateyes = donateyes.filter(HIT.completed == True)
-        donateyes = donateyes.count()
+            donateno = session.query(HIT)
+            donateno = donateno.filter(HIT.donatebonus == False)
+            donateno = donateno.filter(HIT.completed == True)
+            donateno = donateno.count()
 
-        donateno = session.query(HIT)
-        donateno = donateno.filter(HIT.donatebonus == False)
-        donateno = donateno.filter(HIT.completed == True)
-        donateno = donateno.count()
+            donatetotal = donateyes + donateno
 
-        donatetotal = donateyes + donateno
+            print "{0:>5} total HITs completed".format(donatetotal)
+            print "{0:>5} times the worker elected to donate".format(donateyes)
+            print "{0:>5} times the worker opted to receive bonus".format(donateno)
+        finally:
+            session.close()
 
-        print "{0:>5} total HITs completed".format(donatetotal)
-        print "{0:>5} times the worker elected to donate".format(donateyes)
-        print "{0:>5} times the worker opted to receive bonus".format(donateno)
-    finally:
-        session.close()
+class setupdb(Command):
+    def setup(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--reset", action="store_true")
+        parser.add_argument("--no-confirm", action="store_true")
+        return parser
 
-def setupdb(args):
-    import models
-    import turkic.models
+    def __call__(self, args):
+        import models
+        import turkic.models
 
-    if "--reset" in args:
-        if "--no-confirm" in args:
-            database.reinstall()
-            print "Reinstalled."
-        else:
-            resp = raw_input("Reset database? ").lower()
-            if resp in ["yes", "y"]:
+        if args.reset:
+            if args.no_confirm:
                 database.reinstall()
-                print "Reinstalled."
+                print "Database reset!"
             else:
-                print "Aborted."
-    else:
-        database.install()
-        print "Installed."
+                resp = raw_input("Reset database? ").lower()
+                if resp in ["yes", "y"]:
+                    database.reinstall()
+                    print "Database reset!"
+                else:
+                    print "Aborted. No changes to database."
+        else:
+            database.install()
+            print "Installed new tables, if any."
 
 try:
     import config
 except ImportError:
     handler("Start a new project")(init)
 else:
-    handler("Report job status")(progress)
+    handler("Report job status")(status)
     handler("Launch work")(publish)
     handler("Pay workers")(compensate)
     handler("Setup the database")(setupdb)

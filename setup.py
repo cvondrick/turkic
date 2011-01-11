@@ -1,5 +1,5 @@
-from distutils.core import setup
-from distutils.extension import Extension
+from setuptools import setup
+from setuptools import Extension
 from turkic.fileutil import getfiles
 
 datafiles  = list(getfiles("turkic/skeleton"))
@@ -10,7 +10,11 @@ setup(
     name = "turkic",
     author = "Carl Vondrick",
     author_email = "cvondric@ics.uci.edu",
-    version = "0.1.0",
+    description = "A framework for Mechanical Turk HITs",
+    license = "MIT",
+    version = "0.0.1",
+    classifiers = ['Development Status :: 1 - Planning',
+                   'Intended Audience :: Developers'],
     packages = ["turkic"],
     scripts = ['scripts/turkic'],
     package_dir = {"turkic": "turkic"},
