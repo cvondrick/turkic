@@ -237,8 +237,6 @@ class compensate(Command):
             session.commit()
             session.close()
 
-def setupdb(args):
-
 class setupdb(Command):
     def setup(self):
         parser = argparse.ArgumentParser()
