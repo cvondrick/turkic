@@ -104,6 +104,17 @@ class HIT(database.Base):
         self.worker = worker
         self.worker.numsubmitted += 1
 
+    def disable(self):
+        if not self.published:
+            raise RuntimeError("HIT cannot be disabled because it is not published")
+        if self.completed:
+            raise RuntimeError("HIT cannot be disabled because it is completed")
+        api.server.disable(self.hitid)
+        oldhitid = self.hitid
+        self.published = False
+        self.hitid = None
+        return oldhitid
+
     def accept(self, reason = None, bs = True):
         if not reason:
             if bs:

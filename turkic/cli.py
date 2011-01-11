@@ -138,8 +138,8 @@ class status(Command):
         print "  Available:   {0}".format(available)
         print "  Published:   {0}".format(published)
         print "  Completed:   {0}".format(completed)
-        print "  Remaining:   {0}".format(published - completed)
         print "  Compensated: {0}".format(compensated)
+        print "  Remaining:   {0}".format(published - completed)
         
     def __call__(self, args):
         session = database.connect()
@@ -154,23 +154,38 @@ class publish(Command):
     def setup(self):
         parser = argparse.ArgumentParser()
         parser.add_argument("--limit", type=int, default = 0)
+        parser.add_argument("--disable", action="store_true")
         return parser
 
     def publish(self, hit):
         hit.publish()
         print "Published {0}".format(hit.hitid)
 
+    def disable(self, hit):
+        hitid = hit.disable()
+        print "Disabled {0}".format(hitid)
+
     def __call__(self, args):
         session = database.connect()
         try:
             query = session.query(HIT)
-            query = query.filter(HIT.published == False)
-            if args.limit > 0:
-                query = query.limit(args.limit)
+            if args.disable:
+                query = query.filter(HIT.published == True)
+                query = query.filter(HIT.completed == False)
+                if args.limit > 0:
+                    query = query.limit(args.limit)
 
-            for hit in query:
-                self.publish(hit)
-                session.add(hit)
+                for hit in query:
+                    self.disable(hit)
+                    session.add(hit)
+            else:
+                query = query.filter(HIT.published == False)
+                if args.limit > 0:
+                    query = query.limit(args.limit)
+
+                for hit in query:
+                    self.publish(hit)
+                    session.add(hit)
         finally:
             session.commit()
             session.close()
@@ -197,15 +212,15 @@ class compensate(Command):
             hit.accept()
         elif hit.assignmentid in rejectkeys:
             hit.reject()
-        elif args.default == "accept":
+        elif default == "accept":
             hit.accept()
-        elif args.default == "reject":
+        elif default == "reject":
             hit.reject()
 
     def awardbonus(self, hit, bonus, bonus_reason):
         if hit.accepted:
             print "Accepted HIT {0}".format(hit.hitid)
-            if args.bonus > 0:
+            if bonus > 0:
                 hit.awardbonus(bonus, bonus_reason)
                 print "Awarded bonus to HIT {0}".format(hit.hitid)
             if hit.group.bonus > 0:

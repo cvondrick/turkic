@@ -74,6 +74,14 @@ class Server(object):
         r.store("HIT/HITId", "hitid")
         r.store("HIT/HITTypeId", "hittypeid")
         return r
+    
+    def disable(self, hitid):
+        """
+        Disables the HIT from the MTurk service.
+        """
+        r = self.request("DisableHIT", {"HITId": hitid})
+        r.validate("DisableHITResult/Request/IsValid", "DisableHITResult/Request/Errors/Error/Message")
+        return r
 
     def accept(self, assignmentid, feedback = ""):
         """
