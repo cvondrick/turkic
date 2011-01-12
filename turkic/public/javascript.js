@@ -119,6 +119,7 @@ function mturk_showstatistics()
         var reward = $('<div id="turkic_workerstatsreward"></div>');
         var amount = Math.round(data["reward"] * 100);
         var bonus = Math.round(data["bonus"] * 100);
+        var donationenabled = data["donate"];
 
         var rewardstr = '<div class="turkic_workerstatsnumber">' + amount + ' &cent;</div> pay';
         if (bonus > 0)
@@ -160,7 +161,7 @@ function mturk_showstatistics()
         }
         stc.prependTo("body");
 
-        if (bonus > 0)
+        if (donationenabled && bonus > 0)
         {
             mturk_showdonate(amount, bonus);
         }
