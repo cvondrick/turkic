@@ -10,6 +10,7 @@ import database
 import argparse
 from turkic.api import CommunicationError
 from turkic.models import *
+from sqlalchemy import func
 
 handlers = {}
 
@@ -306,11 +307,21 @@ class donation(Command):
             donateno = donateno.filter(HIT.completed == True)
             donateno = donateno.count()
 
-            donatetotal = donateyes + donateno
+            completed = donateyes + donateno
+            percentyes = donateyes / float(completed) * 100
+            percentno = donateno / float(completed) * 100
 
-            print "{0:>5} total HITs completed".format(donatetotal)
-            print "{0:>5} times the worker elected to donate".format(donateyes)
-            print "{0:>5} times the worker opted to receive bonus".format(donateno)
+            donateamount = session.query(func.sum(HITGroup.bonus))
+            donateamount = donateamount.join(HIT)
+            donateamount = donateamount.filter(HIT.donatebonus == True)
+            donateamount = donateamount.one()[0]
+
+            print "{0:>5} total HITs completed".format(completed)
+            print ("{0:>5} times the worker elected for a donation ({1:.0f}%)"
+                .format(donateyes, percentyes))
+            print ("{0:>5} times the worker elected for a bonus    ({1:.0f}%)"
+                .format(donateno, percentno))
+            print "${0:>4.2f} total amount donated".format(donateamount)
         finally:
             session.close()
 
