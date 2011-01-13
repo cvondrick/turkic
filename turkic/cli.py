@@ -310,8 +310,12 @@ class donation(Command):
             donateno = donateno.count()
 
             completed = donateyes + donateno
-            percentyes = donateyes / float(completed) * 100
-            percentno = donateno / float(completed) * 100
+            if completed > 0:
+                percentyes = donateyes / float(completed) * 100
+                percentno = donateno / float(completed) * 100
+            else:
+                percentyes = 0
+                percentno = 0
 
             donateamount = session.query(func.sum(HITGroup.bonus))
             donateamount = donateamount.join(HIT)
