@@ -16,7 +16,7 @@ class HITGroup(database.Base):
     keywords    = Column(String(250), nullable = False)
     height      = Column(Integer, nullable = False, default = 650)
     bonus       = Column(Float, nullable = False, default = 0.0)
-    donate      = Column(Boolean, default = False)
+    donatebonus = Column(Boolean, default = False)
 
 class Worker(database.Base):
     __tablename__ = "turkic_workers"
