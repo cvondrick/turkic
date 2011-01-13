@@ -327,16 +327,17 @@ class donation(Command):
         finally:
             session.close()
 
-class setupdb(Command):
+class setup(Command):
     def setup(self):
         parser = argparse.ArgumentParser()
+        parser.add_argument("--database", action="store_true")
         parser.add_argument("--reset", action="store_true")
         parser.add_argument("--no-confirm", action="store_true")
         return parser
 
-    def __call__(self, args):
-        import models
+    def database(self, args):
         import turkic.models
+        import models
 
         if args.reset:
             if args.no_confirm:
@@ -353,6 +354,10 @@ class setupdb(Command):
             database.install()
             print "Installed new tables, if any."
 
+    def __call__(self, args):
+        if args.database:
+            self.database(args)
+
 try:
     import config
 except ImportError:
@@ -361,5 +366,5 @@ else:
     handler("Report job status")(status)
     handler("Launch work")(publish)
     handler("Pay workers")(compensate)
-    handler("Setup the database")(setupdb)
+    handler("Setup the application")(setup)
     handler("Report status on donations")(donation)
