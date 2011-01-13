@@ -182,7 +182,7 @@ function mturk_showdonate(reward, bonus)
     var str = '<h1>Do you want to end world hunger?</h1>';
     str += '<p>We are offering our users the chance to work on behalf of a charity. When your HIT is accepted, we will pay you both your standard compensation as well as a bonus. If you choose, we can donate your bonus to charity instead.</p>';
     str += '<p>For this HIT, you will receive ' + reward + '&cent; with an additional ' + bonus + '&cent; bonus. If you opt to donate, your HIT will be accepted and you will receive ' + reward + '&cent;, but we will donate your bonus to charity.</p>';
-    str += '<p>We urge you to consider donating. All proceeds will go to <a href="http://www.wfp.org" target="_blank">United Nation\'s World Food Programme</a> to fight world hunger. If every worker donates, we can collectively donate hundreds of thousands of dollars. Your actions can have an impact &mdash; all you must do is donate.</p>';
+    str += '<p>We urge you to consider donating. All bonuses will go to <a href="http://www.wfp.org" target="_blank">United Nation\'s World Food Programme</a> to fight world hunger. If every worker donates, we can collectively donate hundreds of thousands of dollars. Your actions can have an impact &mdash; all you must do is donate.</p>';
     str += '<div style="margin-left : 20px;">';
     str += "<strong>Can we donate your bonus to fight world hunger?</strong><br>";
     str += '<input type="radio" id="turkic_donate_yes" name="turkic_donate_option">';
