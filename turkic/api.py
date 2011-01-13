@@ -27,7 +27,8 @@ class Server(object):
             raise RuntimeError("Signature or access key missing")
 
         timestamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-        hmacstr = hmac.new(config.signature, "AWSMechanicalTurkRequester" + operation + timestamp, hashlib.sha1)
+        hmacstr = hmac.new(config.signature,
+            "AWSMechanicalTurkRequester" + operation + timestamp, hashlib.sha1)
         hmacstr = base64.encodestring(hmacstr.digest()).strip()
 
         baseurl = "/?" + urllib.urlencode({
@@ -45,7 +46,8 @@ class Server(object):
         conn.close()
         return response
 
-    def createhit(self, title, description, page, amount, duration, lifetime, keywords = "", autoapprove = 604800, height = 650):
+    def createhit(self, title, description, page, amount, duration,
+        lifetime, keywords = "", autoapprove = 604800, height = 650):
         """
         Creates a HIT on Mechanical Turk.
         
@@ -53,7 +55,8 @@ class Server(object):
             hit_id          The HIT ID
             hit_type_id     The HIT group ID
 
-        If unsuccessful, a CommunicationError is raised with a message describing the failure.
+        If unsuccessful, a CommunicationError is raised with a message
+        describing the failure.
         """
         r = {"Title": title,
             "Description": description,
