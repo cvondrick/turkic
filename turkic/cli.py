@@ -313,14 +313,16 @@ class donation(Command):
             if completed > 0:
                 percentyes = donateyes / float(completed) * 100
                 percentno = donateno / float(completed) * 100
+
+                donateamount = session.query(func.sum(HITGroup.bonus))
+                donateamount = donateamount.join(HIT)
+                donateamount = donateamount.filter(HIT.donatebonus == True)
+                donateamount = donateamount.one()[0]
             else:
                 percentyes = 0
                 percentno = 0
+                donateamount = 0
 
-            donateamount = session.query(func.sum(HITGroup.bonus))
-            donateamount = donateamount.join(HIT)
-            donateamount = donateamount.filter(HIT.donatebonus == True)
-            donateamount = donateamount.one()[0]
 
             print "{0:>5} total HITs completed".format(completed)
             print ("{0:>5} times the worker elected for a donation ({1:.0f}%)"
