@@ -52,7 +52,7 @@ class LoadCommand(object):
                         cost = args.cost,
                         bonus = args.bonus,
                         keywords = args.keywords,
-                        donatebonus = args.donate-bonus)
+                        donatebonus = args.donate_bonus)
         self(args, group)
 
     def __call__(self, args, group):
