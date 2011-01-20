@@ -107,6 +107,7 @@ def getworkerstats(hitid, workerid):
 
         status["reward"] = hit.group.cost
         status["bonus"] = hit.group.bonus
+        status["perobject"] = hit.group.perobject
         status["donate"] = hit.group.donate
         
         worker = session.query(models.Worker)

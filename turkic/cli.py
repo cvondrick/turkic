@@ -52,7 +52,8 @@ class LoadCommand(object):
                         cost = args.cost,
                         bonus = args.bonus,
                         keywords = args.keywords,
-                        donatebonus = args.donate_bonus)
+                        donatebonus = args.donate_bonus,
+                        perobject = args.per_object)
         self(args, group)
 
     def __call__(self, args, group):
@@ -68,6 +69,7 @@ importparser.add_argument("--lifetime", type=int, default = 1209600)
 importparser.add_argument("--keywords", default = "")
 importparser.add_argument("--bonus", "-b", type=float, default = 0.00)
 importparser.add_argument("--donate-bonus", action="store_true")
+importparser.add_argument("--per-object", type=float, default = 0.00)
 
 def main(args = None):
     """
