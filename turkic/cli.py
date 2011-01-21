@@ -45,28 +45,54 @@ class Command(object):
 class LoadCommand(object):
     def __init__(self, args):
         args = self.setup().parse_args(args)
-        group = HITGroup(title = args.title.format(c = args.plural),
-                        description = args.description.format(c = args.plural),
-                        duration = args.duration,
-                        lifetime = args.lifetime,
-                        cost = args.cost,
+
+        title = args.title if args.title else self.title(args)
+        description = args.description if args.description else self.description(args)
+        cost = args.cost if args.cost is not None else self.cost(args)
+        lifetime = args.lifetime if args.lifetime else self.lifetime(args)
+        duration = args.duration if args.duration else self.duration(args)
+        keywords = args.keywords if args.keywords else self.keywords(args)
+
+        group = HITGroup(title = title,
+                        description = description,
+                        duration = duration,
+                        lifetime = lifetime,
+                        cost = cost,
                         bonus = args.bonus,
-                        keywords = args.keywords,
+                        keywords = keywords,
                         donatebonus = args.donate_bonus,
                         perobject = args.per_object)
+
         self(args, group)
 
     def __call__(self, args, group):
         raise NotImplementedError("__call__() must be defined") 
 
+    def title(self, args):
+        raise NotImplementedError()
+
+    def description(self, args):
+        raise NotImplementedError()
+
+    def cost(self, args):
+        return 0.02
+
+    def lifetime(self, args):
+        return 1209600
+
+    def duration(self, args):
+        return 600
+
+    def keywords(self, args):
+        return ""
+        
 importparser = argparse.ArgumentParser(add_help=False)
-importparser.add_argument("--title", default = "Image annotation of {c}")
-importparser.add_argument("--description", 
-    default = "Draw boxes around {c} in this image.")
-importparser.add_argument("--cost", "-c", type=float, default = 0.02)
-importparser.add_argument("--duration", type=int, default = 600)
-importparser.add_argument("--lifetime", type=int, default = 1209600)
-importparser.add_argument("--keywords", default = "")
+importparser.add_argument("--title", default = None)
+importparser.add_argument("--description", default = None)
+importparser.add_argument("--cost", "-c", type=float, default = None)
+importparser.add_argument("--duration", type=int, default = None)
+importparser.add_argument("--lifetime", type=int, default = None)
+importparser.add_argument("--keywords", default = None)
 importparser.add_argument("--bonus", "-b", type=float, default = 0.00)
 importparser.add_argument("--donate-bonus", action="store_true")
 importparser.add_argument("--per-object", type=float, default = 0.00)
