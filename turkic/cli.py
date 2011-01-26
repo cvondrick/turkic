@@ -270,7 +270,6 @@ class compensate(Command):
 
     def awardbonus(self, hit, bonus, bonus_reason):
         if hit.accepted:
-            print "Accepted HIT {0}".format(hit.hitid)
             if bonus > 0:
                 hit.awardbonus(bonus, bonus_reason)
                 print "Awarded bonus to HIT {0}".format(hit.hitid)
@@ -294,8 +293,6 @@ class compensate(Command):
             query = session.query(HIT)
             query = query.filter(HIT.completed == True)
             query = query.filter(HIT.compensated == False)
-
-            donationtotals = {}
 
             for hit in query:
                 try:
