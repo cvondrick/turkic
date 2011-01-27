@@ -237,6 +237,7 @@ class publish(Command):
                 for hit in query:
                     self.publish(hit)
                     session.add(hit)
+                    session.commit()
         finally:
             session.commit()
             session.close()
@@ -347,7 +348,6 @@ class donation(Command):
                 percentyes = 0
                 percentno = 0
                 donateamount = 0
-
 
             print "{0:>5} total HITs completed".format(completed)
             print ("{0:>5} times the worker elected for a donation ({1:.0f}%)"
