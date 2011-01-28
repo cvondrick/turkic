@@ -3,6 +3,7 @@ from sqlalchemy import Column, Integer, String, Text, Float, Boolean, ForeignKey
 from sqlalchemy.orm import relationship, backref
 import database
 import random
+import config
 
 class HITGroup(database.Base):
     __tablename__ = "turkic_hit_groups"
@@ -18,6 +19,7 @@ class HITGroup(database.Base):
     bonus       = Column(Float, nullable = False, default = 0.0)
     donatebonus = Column(Boolean, default = False)
     perobject   = Column(Float, nullable = False, default = 0.0)
+    offline     = Column(Boolean, default = False)
 
 class Worker(database.Base):
     __tablename__ = "turkic_workers"
@@ -138,6 +140,10 @@ class HIT(database.Base):
     
     def awardbonus(self, amount, reason):
         api.server.bonus(self.workerid, self.assignmentid, amount, reason)
+
+    def offlineurl(self):
+        return "{0}{1}&hitId=offline&turkicId={2}".format(config.localhost,
+            self.page, self.id)
 
 reasons = ["Thanks for your hard work!",
           "Excellent work!",

@@ -61,7 +61,8 @@ class LoadCommand(object):
                         bonus = args.bonus,
                         keywords = keywords,
                         donatebonus = args.donate_bonus,
-                        perobject = args.per_object)
+                        perobject = args.per_object,
+                        offline = args.offline)
 
         self(args, group)
 
@@ -96,6 +97,7 @@ importparser.add_argument("--keywords", default = None)
 importparser.add_argument("--bonus", "-b", type=float, default = 0.00)
 importparser.add_argument("--donate-bonus", action="store_true")
 importparser.add_argument("--per-object", type=float, default = 0.00)
+importparser.add_argument("--offline", action="store_true")
 
 def main(args = None):
     """
@@ -206,28 +208,27 @@ class publish(Command):
         parser = argparse.ArgumentParser()
         parser.add_argument("--limit", type=int, default = 0)
         parser.add_argument("--disable", action="store_true")
+        parser.add_argument("--offline", action="store_true", default = False)
         return parser
-
-    def publish(self, hit):
-        hit.publish()
-        print "Published {0}".format(hit.hitid)
-
-    def disable(self, hit):
-        hitid = hit.disable()
-        print "Disabled {0}".format(hitid)
 
     def __call__(self, args):
         session = database.connect()
         try:
             query = session.query(HIT)
+            query = query.join(HITGroup)
+            query = query.filter(HITGroup.offline == args.offline)
             if args.disable:
+                if args.offline:
+                    print "Cannot disable offline HITs."
+                    return
                 query = query.filter(HIT.published == True)
                 query = query.filter(HIT.completed == False)
                 if args.limit > 0:
                     query = query.limit(args.limit)
 
                 for hit in query:
-                    self.disable(hit)
+                    hitid = hit.disable()
+                    print "Disabled {0}".format(hitid)
                     session.add(hit)
             else:
                 query = query.filter(HIT.published == False)
@@ -235,9 +236,13 @@ class publish(Command):
                     query = query.limit(args.limit)
 
                 for hit in query:
-                    self.publish(hit)
-                    session.add(hit)
-                    session.commit()
+                    if args.offline:
+                        print hit.offlineurl()
+                    else:
+                        hit.publish()
+                        print "Published {0}".format(hit.hitid)
+                        session.add(hit)
+                        session.commit()
         finally:
             session.commit()
             session.close()
@@ -294,6 +299,8 @@ class compensate(Command):
             query = session.query(HIT)
             query = query.filter(HIT.completed == True)
             query = query.filter(HIT.compensated == False)
+            query = query.join(HITGroup)
+            query = query.filter(HITGroup.offline == False)
 
             for hit in query:
                 try:
