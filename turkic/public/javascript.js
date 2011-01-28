@@ -46,6 +46,10 @@ function mturk_parameters()
         {
             retval.workerid = result;
         }
+        else if (sp[0] == "turkicId")
+        {
+            retval.turkicid = result;
+        }
         else if (sp[0] == "turkSubmitTo")
         {
             retval.action = decodeURIComponent(result) +
@@ -56,7 +60,7 @@ function mturk_parameters()
             retval[sp[0]] = result;
         }
     }
-    
+
     return retval;
 }
 
@@ -66,9 +70,20 @@ function mturk_isassigned()
     return params.assignmentid && params.assignmentid != "ASSIGNMENT_ID_NOT_AVAILABLE" && params.hitid && params.workerid;
 }
 
+function mturk_isoffline()
+{
+    var params = mturk_parameters();
+    return params.hitid == "offline";
+}
+
+function mturk_submitallowed()
+{
+    return mturk_isassigned() || mturk_isoffline();
+}
+
 function mturk_submit(callback)
 {
-    if (!mturk_isassigned())
+    if (!mturk_submitallowed())
     {
         alert("Please accept task before submitting.");
         return;
@@ -90,22 +105,46 @@ function mturk_submit(callback)
     // function that must be called to formally complete transaction
     function redirect()
     {
-        server_request("turkic_markcomplete", [params.hitid, params.assignmentid, params.workerid], function() {
-            $("#turkic_mturk").submit();
-        });
+        server_request("turkic_markcomplete",
+            [params.hitid, params.assignmentid, params.workerid],
+            function() {
+                $("#turkic_mturk").submit();
+            });
     }
 
-    var donateyes = $("#turkic_donate_yes").attr("checked") ? 1 : 0;
-    server_request("turkic_savejobstats", [params.hitid, turkic_timeaccepted, now, donateyes], function() {
-        callback(redirect);
-    });
+    if (mturk_isoffline())
+    {
+        callback(function() { });
+    }
+    else
+    {
+        var donateyes = $("#turkic_donate_yes").attr("checked") ? 1 : 0;
+        server_request("turkic_savejobstats", [params.hitid, turkic_timeaccepted, now, donateyes], function() {
+            callback(redirect);
+        });
+    }
 }
 
 
 function mturk_acceptfirst()
 {
-    var af = $('<div id="turkic_acceptfirst"></div>').prependTo("body")
-    af.html("Remember to accept the task before working!");
+    if (mturk_isoffline())
+    {
+        mturk_showoffline();
+    }
+    else
+    {
+        var af = $('<div id="turkic_acceptfirst"></div>').prependTo("body")
+        af.html("Remember to accept the task before working!");
+    }
+}
+
+function mturk_showoffline()
+{
+    var stc = $('<div id="turkic_workerstats"><div id="turkic_workerstatscontent"></div></div>');
+    st = stc.children("#turkic_workerstatscontent");
+    st.append("Task is in <strong>offline</strong> mode. MTurk is disabled.");
+    stc.appendTo("body");
 }
 
 function mturk_showstatistics()
