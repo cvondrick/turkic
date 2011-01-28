@@ -142,8 +142,7 @@ class HIT(database.Base):
         api.server.bonus(self.workerid, self.assignmentid, amount, reason)
 
     def offlineurl(self):
-        return ("{0}{1}&hitId=offline&turkicId={2}"
-            .format(config.localhost, self.page, self.id))
+        return "{0}{1}&hitId=offline".format(config.localhost, self.page)
 
 reasons = ["Thanks for your hard work!",
           "Excellent work!",

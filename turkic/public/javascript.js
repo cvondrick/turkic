@@ -46,10 +46,6 @@ function mturk_parameters()
         {
             retval.workerid = result;
         }
-        else if (sp[0] == "turkicId")
-        {
-            retval.turkicid = result;
-        }
         else if (sp[0] == "turkSubmitTo")
         {
             retval.action = decodeURIComponent(result) +
