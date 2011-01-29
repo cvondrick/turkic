@@ -274,16 +274,24 @@ class compensate(Command):
         elif default == "reject":
             hit.reject()
 
-    def awardbonus(self, hit, bonus, bonus_reason):
+    def awardbonus(self, hit):
         if hit.accepted:
-            if bonus > 0:
-                hit.awardbonus(bonus, bonus_reason)
-                print "Awarded bonus to HIT {0}".format(hit.hitid)
-            if hit.group.bonus > 0:
-                hit.awardbonus(hit.group.bonus, "Great job!")
-                print "Awarded bonus to HIT {0}".format(hit.hitid)
-        else:
-            print "Rejected HIT {0}".format(hit.hitid)
+
+            if hit.donatebonus or hit.group.donatebonus:
+                print "Worker elected to donate bonus."
+            else:
+                if hit.bonus > 0:
+                    hit.awardbonus(hit.bonus, "Great job!")
+                    print "Awarded bonus to HIT {0}".format(hit.hitid)
+                if hit.group.bonus > 0:
+                    hit.awardbonus(hit.group.bonus, "Great job!")
+                    print "Awarded bonus to HIT {0}".format(hit.hitid)
+
+            if hit.group.perobject and hit.numobjects > 0:
+                hit.awardbonus(hit.group.perobject * hit.numobjects, 
+                    "For {0} units of work".format(hit.numobjects))
+                print "Compensated HIT {0} for {1} objects".format(
+                    hit.hitid, hit.numobjects)
 
     def __call__(self, args):
         session = database.connect()
@@ -309,15 +317,7 @@ class compensate(Command):
                     if hit.compensated:
                         if hit.accepted:
                             print "Accepted HIT {0}".format(hit.hitid)
-                            if hit.donatebonus:
-                                print "Worker elected to donate bonus."
-                            else:
-                                if args.bonus > 0:
-                                    hit.awardbonus(args.bonus, args.bonus_reason)
-                                    print "Awarded bonus to HIT {0}".format(hit.hitid)
-                                if hit.group.bonus > 0:
-                                    hit.awardbonus(hit.group.bonus, "Great job!")
-                                    print "Awarded bonus to HIT {0}".format(hit.hitid)
+                            self.awardbonus(hit)
                         else:
                             print "Rejected HIT {0}".format(hit.hitid)
                         self.awardbonus(hit, args.bonus, args.bonus_reason)
