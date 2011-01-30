@@ -139,7 +139,7 @@ function mturk_showoffline()
 {
     var stc = $('<div id="turkic_workerstats"><div id="turkic_workerstatscontent"></div></div>');
     st = stc.children("#turkic_workerstatscontent");
-    st.append("Task is in <strong>offline</strong> mode. MTurk is disabled.");
+    st.append("Task is in <strong>offline</strong> mode. Mechanical Turk hooks are disabled.");
     stc.appendTo("body");
 }
 
