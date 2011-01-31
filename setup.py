@@ -1,6 +1,11 @@
 from setuptools import setup
 from setuptools import Extension
-from turkic.fileutil import getfiles
+import os
+
+def getfiles(root):
+    for dirpath, _, filenames in os.walk(root):
+        for filename in filenames:
+            yield os.path.realpath(os.path.join(dirpath, filename))
 
 datafiles  = list(getfiles("turkic/skeleton"))
 datafiles += list(getfiles("turkic/public"))
@@ -12,7 +17,7 @@ setup(
     author_email = "cvondric@ics.uci.edu",
     description = "A framework for Mechanical Turk HITs",
     license = "MIT",
-    version = "0.0.1",
+    version = "0.0.3",
     classifiers = ['Development Status :: 1 - Planning',
                    'Intended Audience :: Developers'],
     packages = ["turkic"],

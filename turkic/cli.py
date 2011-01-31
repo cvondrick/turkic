@@ -237,7 +237,7 @@ class publish(Command):
 
                 for hit in query:
                     if args.offline:
-                        print hit.offlineurl()
+                        print hit.offlineurl(config.localhost)
                     else:
                         hit.publish()
                         print "Published {0}".format(hit.hitid)
