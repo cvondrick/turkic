@@ -320,7 +320,6 @@ class compensate(Command):
                             self.awardbonus(hit)
                         else:
                             print "Rejected HIT {0}".format(hit.hitid)
-                        self.awardbonus(hit, args.bonus, args.bonus_reason)
                         session.add(hit)
                 except CommunicationError as e:
                     print "Error with HIT {0}: {1}".format(hit.hitid, e)

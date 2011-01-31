@@ -4,11 +4,11 @@ import os, sys
 cwd = os.getcwd()
 sys.path.append(cwd)
 
-import turkic.cli
-
 try:
     import cli
 except ImportError:
     pass
+
+import turkic.cli
 
 turkic.cli.main()
