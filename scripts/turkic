@@ -5,6 +5,7 @@ cwd = os.getcwd()
 sys.path.append(cwd)
 
 try:
+    import config
     import cli
 except ImportError:
     pass
