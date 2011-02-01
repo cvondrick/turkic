@@ -158,15 +158,14 @@ function mturk_showstatistics()
         var donationenabled = data["donate"];
 
         var rewardstr = '<div class="turkic_workerstatsnumber">' + amount + ' &cent;</div> pay';
-        if (bonus > 0)
-        {
-            rewardstr += ' + <div class="turkic_workerstatsnumber">' + bonus + ' &cent;</div> bonus';
-        }
         if (perobject > 0)
         {
             rewardstr += ' + <div class="turkic_workerstatsnumber">' + perobject + ' &cent;</div> per object';
         }
-
+        if (bonus > 0)
+        {
+            rewardstr += ' + <div class="turkic_workerstatsnumber">' + bonus + ' &cent;</div> bonus';
+        }
         reward.html('Reward: ' + rewardstr);
         st.append(reward);
 
