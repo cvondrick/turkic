@@ -350,6 +350,9 @@ class donation(Command):
                 donateamount = donateamount.join(HIT)
                 donateamount = donateamount.filter(HIT.donatebonus == True)
                 donateamount = donateamount.one()[0]
+
+                if not donateamount:
+                    donateamount = 0
             else:
                 percentyes = 0
                 percentno = 0
