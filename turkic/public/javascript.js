@@ -153,19 +153,16 @@ function mturk_showstatistics()
 
         var reward = $('<div id="turkic_workerstatsreward"></div>');
         var amount = Math.round(data["reward"] * 100);
-        var bonus = Math.round(data["bonus"] * 100);
-        var perobject = Math.round(data["perobject"] * 100);
-        var donationenabled = data["donate"];
+        var donationenabled = data["donation"] == 2;
+        var bonuses = data["bonuses"]
 
         var rewardstr = '<div class="turkic_workerstatsnumber">' + amount + ' &cent;</div> pay';
-        if (perobject > 0)
+
+        for (var i in bonuses)
         {
-            rewardstr += ' + <div class="turkic_workerstatsnumber">' + perobject + ' &cent;</div> per object';
+            rewardstr += ' + <div class="turkic_workerstatsnumber">' + (bonuses[i][0] * 100) + ' &cent;</div> ' + bonuses[i][1];
         }
-        if (bonus > 0)
-        {
-            rewardstr += ' + <div class="turkic_workerstatsnumber">' + bonus + ' &cent;</div> bonus';
-        }
+
         reward.html('Reward: ' + rewardstr);
         st.append(reward);
 

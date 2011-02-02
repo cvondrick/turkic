@@ -15,9 +15,7 @@ class HITGroup(database.Base):
     cost        = Column(Float, nullable = False)
     keywords    = Column(String(250), nullable = False)
     height      = Column(Integer, nullable = False, default = 650)
-    bonus       = Column(Float, nullable = False, default = 0.0)
-    donatebonus = Column(Boolean, default = False)
-    perobject   = Column(Float, nullable = False, default = 0.0)
+    donation    = Column(Integer, default = False) # 0 = off, 1 = option, 2 = force
     offline     = Column(Boolean, default = False)
 
 class Worker(database.Base):
@@ -30,6 +28,7 @@ class Worker(database.Base):
     trained        = Column(Boolean, default = False)
     trusted        = Column(Boolean, default = False)
     blocked        = Column(Boolean, default = False)
+    donatedamount  = Column(Float, default = 0.0, nullable = False)
 
     def block(self):
         api.server.block(self.id)
@@ -76,12 +75,14 @@ class HIT(database.Base):
     timecompleted = Column(DateTime)
     timeonserver  = Column(DateTime)
     ipaddress     = Column(String(15))
-    bonus         = Column(Numeric, default = 0.0)
     page          = Column(String(250), nullable = False, default = "")
-    donatebonus   = Column(Boolean, default = False)
-    numobjects    = Column(Integer, default = 0)
+    opt2donate    = Column(Boolean, default = False)
+    donatedamount = Column(Float, nullable = False, default = 0.0)
 
     def publish(self):
+        if self.published:
+            raise RuntimeError("HIT cannot be published because it has already "
+                "been published.")
         resp = api.server.createhit(
             title = self.group.title,
             description = self.group.description,
@@ -90,8 +91,7 @@ class HIT(database.Base):
             lifetime = self.group.lifetime,
             keywords = self.group.keywords,
             height = self.group.height,
-            page = self.page
-        )
+            page = self.page)
         self.hitid = resp.hitid
         self.published = True
 
@@ -132,17 +132,57 @@ class HIT(database.Base):
         self.compensated = True
         self.worker.numacceptances += 1
 
+        for schedule in self.group.schedules:
+            schedule.award(self)
+
     def reject(self, reason = ""):
         api.server.reject(self.assignmentid, reason)
         self.accepted = False
         self.compensated = True
         self.worker.numrejections += 1
     
-    def awardbonus(self, amount, reason):
-        api.server.bonus(self.workerid, self.assignmentid, amount, reason)
+    def awardbonus(self, amount, reason = None, bs = True):
+        if self.opt2donate:
+            self.donatedamount += amount
+            self.worker.donatedamount += amount
+        else:
+            if not reason:
+                if bs:
+                    reason = random.choice(reasons)
+                else:
+                    reason = ""
+            api.server.bonus(self.workerid, self.assignmentid, amount, reason)
 
     def offlineurl(self, localhost):
         return "{0}{1}&hitId=offline".format(localhost, self.page)
+
+class BonusSchedule(database.Base):
+    __tablename__ = "turkic_bonus_schedules"
+
+    id = Column(Integer, primary_key = True)
+    groupid = Column(Integer, ForeignKey(HITGroup.id))
+    group = relationship(HITGroup, backref = "schedules")
+    discriminator = Column('type', String(250))
+    __mapper_args__ = {'polymorphic_on': discriminator}
+
+    def award(self, hit):
+        raise NotImplementedError()
+
+    def description(self):
+        raise NotImplementedError()
+
+class ConstantBonus(BonusSchedule):
+    __tablename__ = "turkic_bonus_schedule_constant"
+    __maper_args__ = {'polymorphic_identity': "turkic_constant"}
+
+    id = Column(Integer, ForeignKey(BonusSchedule.id), primary_key = True)
+    amount = Column(Float, nullable = False)
+
+    def award(self, hit):
+        hit.awardbonus(self.amount, "For completing the task.")
+
+    def description(self):
+        return (self.amount, "bonus")
 
 reasons = ["Thanks for your hard work!",
           "Excellent work!",

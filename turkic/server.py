@@ -106,9 +106,8 @@ def getworkerstats(hitid, workerid):
         hit = hit.one()
 
         status["reward"] = hit.group.cost
-        status["bonus"] = hit.group.bonus
-        status["perobject"] = hit.group.perobject
-        status["donate"] = hit.group.donatebonus
+        status["donate"] = hit.group.donation
+        status["bonuses"] = [x.description() for x in hit.group.schedules]
         
         worker = session.query(models.Worker)
         worker = worker.filter(models.Worker.id == workerid)

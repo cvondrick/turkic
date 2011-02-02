@@ -53,15 +53,19 @@ class LoadCommand(object):
         duration = args.duration if args.duration else self.duration(args)
         keywords = args.keywords if args.keywords else self.keywords(args)
 
+        donation = 0
+        if args.donation == "option":
+            donation = 1
+        elif args.donation == "force":
+            donation = 2
+
         group = HITGroup(title = title,
                         description = description,
                         duration = duration,
                         lifetime = lifetime,
                         cost = cost,
-                        bonus = args.bonus,
                         keywords = keywords,
-                        donatebonus = args.donate_bonus,
-                        perobject = args.per_object,
+                        donation  = donation,
                         offline = args.offline)
 
         self(args, group)
@@ -94,9 +98,8 @@ importparser.add_argument("--cost", "-c", type=float, default = None)
 importparser.add_argument("--duration", type=int, default = None)
 importparser.add_argument("--lifetime", type=int, default = None)
 importparser.add_argument("--keywords", default = None)
-importparser.add_argument("--bonus", "-b", type=float, default = 0.00)
-importparser.add_argument("--donate-bonus", action="store_true")
-importparser.add_argument("--per-object", type=float, default = 0.00)
+importparser.add_argument("--donation",
+    choices = ['force', 'option', 'disable'], default = 'disable')
 importparser.add_argument("--offline", action="store_true")
 
 def main(args = None):
@@ -111,7 +114,7 @@ def main(args = None):
         help()
     else:
         try:
-            handler = handlers[args[0]][0]
+           handler = handlers[args[0]][0]
         except KeyError:
             print "Error: Unknown action {0}".format(args[0])
         else:
@@ -274,25 +277,6 @@ class compensate(Command):
         elif default == "reject":
             hit.reject()
 
-    def awardbonus(self, hit):
-        if hit.accepted:
-
-            if hit.donatebonus or hit.group.donatebonus:
-                print "Worker elected to donate bonus."
-            else:
-                if hit.bonus > 0:
-                    hit.awardbonus(hit.bonus, "Great job!")
-                    print "Awarded bonus to HIT {0}".format(hit.hitid)
-                if hit.group.bonus > 0:
-                    hit.awardbonus(hit.group.bonus, "Great job!")
-                    print "Awarded bonus to HIT {0}".format(hit.hitid)
-
-            if hit.group.perobject and hit.numobjects > 0:
-                hit.awardbonus(hit.group.perobject * hit.numobjects, 
-                    "For {0} units of work".format(hit.numobjects))
-                print "Compensated HIT {0} for {1} objects".format(
-                    hit.hitid, hit.numobjects)
-
     def __call__(self, args):
         session = database.connect()
 
@@ -317,7 +301,6 @@ class compensate(Command):
                     if hit.compensated:
                         if hit.accepted:
                             print "Accepted HIT {0}".format(hit.hitid)
-                            self.awardbonus(hit)
                         else:
                             print "Rejected HIT {0}".format(hit.hitid)
                         session.add(hit)
