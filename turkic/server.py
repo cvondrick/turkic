@@ -106,7 +106,7 @@ def getworkerstats(hitid, workerid):
         hit = hit.one()
 
         status["reward"] = hit.group.cost
-        status["donate"] = hit.group.donation
+        status["donationcode"] = hit.group.donation
         status["bonuses"] = [x.description() for x in hit.group.schedules]
         
         worker = session.query(models.Worker)
@@ -137,7 +137,7 @@ def savejobstats(hitid, timeaccepted, timecompleted, donate, environ):
         hit.timeaccepted = datetime.fromtimestamp(int(timeaccepted) / 1000)
         hit.timecompleted = datetime.fromtimestamp(int(timecompleted) / 1000)
         hit.timeonserver = datetime.now()
-        hit.donatebonus = donate
+        hit.opt2donate = donate
 
         hit.ipaddress = environ.get("HTTP_X_FORWARDED_FOR", None)
         hit.ipaddress = environ.get("REMOTE_ADDR", hit.ipaddress)

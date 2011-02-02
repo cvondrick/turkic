@@ -153,8 +153,10 @@ function mturk_showstatistics()
 
         var reward = $('<div id="turkic_workerstatsreward"></div>');
         var amount = Math.round(data["reward"] * 100);
-        var donationenabled = data["donation"] == 2;
+        var donationenabled = data["donationcode"] == 1;
         var bonuses = data["bonuses"]
+
+        console.dir(data);
 
         var rewardstr = '<div class="turkic_workerstatsnumber">' + amount + ' &cent;</div> pay';
 
@@ -197,14 +199,14 @@ function mturk_showstatistics()
         }
         stc.prependTo("body");
 
-        if (donationenabled && bonus > 0)
+        if (donationenabled)
         {
-            mturk_showdonate(amount, bonus);
+            mturk_showdonate(amount);
         }
     });
 }
 
-function mturk_showdonate(reward, bonus)
+function mturk_showdonate(reward)
 {
     if ($("#turkic_donation").size())
     {
@@ -212,15 +214,17 @@ function mturk_showdonate(reward, bonus)
         $("#turkic_overlay").show();
         return;
     }
+
+    console.log("Show donation")
     
     $('<div id="turkic_overlay"></div>').appendTo("body");
 
     var str = '<h1>Do you want to end world hunger?</h1>';
     str += '<p>We are offering our users the chance to work on behalf of a charity. When your HIT is accepted, we will pay you both your standard compensation as well as a bonus. If you choose, we can donate your bonus to charity instead.</p>';
-    str += '<p>For this HIT, you will receive ' + reward + '&cent; with an additional ' + bonus + '&cent; bonus. If you opt to donate, your HIT will be accepted and you will receive ' + reward + '&cent;, but we will donate your bonus to charity.</p>';
+    str += '<p>For this HIT, you will receive ' + reward + '&cent; plus an additional bonus. If you opt to donate, your HIT will be accepted and you will receive ' + reward + '&cent;, but we will donate your bonus to charity.</p>';
     str += '<p>We urge you to consider donating. All bonuses will go to <a href="http://www.wfp.org" target="_blank">United Nation\'s World Food Programme</a> to fight world hunger. If every worker donates, we can collectively donate hundreds of thousands of dollars. Your actions can have an impact &mdash; all you must do is donate.</p>';
     str += '<div style="margin-left : 20px;">';
-    str += "<strong>Can we donate your bonus to fight world hunger?</strong><br>";
+    str += "<p id='turkic_donation_question'><strong>Can we donate your bonus to fight world hunger?</strong></p>";
     str += '<input type="radio" id="turkic_donate_yes" name="turkic_donate_option">';
     str += '<label for="turkic_donate_yes">Yes, donate this bonus to the World Food Programme on my behalf.</label><br>';
     str += '<input type="radio" id="turkic_donate_no" name="turkic_donate_option">';

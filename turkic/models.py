@@ -29,6 +29,7 @@ class Worker(database.Base):
     trusted        = Column(Boolean, default = False)
     blocked        = Column(Boolean, default = False)
     donatedamount  = Column(Float, default = 0.0, nullable = False)
+    bonusamount    = Column(Float, default = 0.0, nullable = False)
 
     def block(self):
         api.server.block(self.id)
@@ -78,6 +79,7 @@ class HIT(database.Base):
     page          = Column(String(250), nullable = False, default = "")
     opt2donate    = Column(Boolean, default = False)
     donatedamount = Column(Float, nullable = False, default = 0.0)
+    bonusamount   = Column(Float, nullable = False, default = 0.0)
 
     def publish(self):
         if self.published:
@@ -127,13 +129,18 @@ class HIT(database.Base):
             else:
                 reason = ""
 
+        for schedule in self.group.schedules:
+            schedule.award(self)
+
+        if self.donatedamount > 0:
+            reason = (reason + " For this HIT, we have donated ${0:>4.2f} to "
+            "the World Food Programme on your behalf. Thank you for your "
+            "support!".format(self.donatedamount))
+
         api.server.accept(self.assignmentid, reason)
         self.accepted = True
         self.compensated = True
         self.worker.numacceptances += 1
-
-        for schedule in self.group.schedules:
-            schedule.award(self)
 
     def reject(self, reason = ""):
         api.server.reject(self.assignmentid, reason)
@@ -146,6 +153,8 @@ class HIT(database.Base):
             self.donatedamount += amount
             self.worker.donatedamount += amount
         else:
+            self.bonusamount += amount
+            self.worker.donatedamount += amount
             if not reason:
                 if bs:
                     reason = random.choice(reasons)
@@ -180,6 +189,7 @@ class ConstantBonus(BonusSchedule):
 
     def award(self, hit):
         hit.awardbonus(self.amount, "For completing the task.")
+        return self.amount
 
     def description(self):
         return (self.amount, "bonus")
