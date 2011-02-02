@@ -47,7 +47,8 @@ class Server(object):
         return response
 
     def createhit(self, title, description, page, amount, duration,
-        lifetime, keywords = "", autoapprove = 604800, height = 650):
+        lifetime, keywords = "", autoapprove = 604800, height = 650,
+        minapprovedpercent = 0.90, minapprovedamount = None):
         """
         Creates a HIT on Mechanical Turk.
         
@@ -66,6 +67,22 @@ class Server(object):
             "AssignmentDurationInSeconds": duration,
             "AutoApprovalDelayInSeconds": autoapprove,
             "LifetimeInSeconds": lifetime}
+
+        qualcounter = 0
+
+        if minapprovedpercent:
+            qualcounter += 1
+            base = "QualificationRequirement.{0}." .format(qualcounter)
+            r[base + "QualificationTypeId"] = "000000000000000000L0"
+            r[base + "Comparator"] = "GreaterThanOrEqualTo"
+            r[base + "IntegerValue"] = minapprovedpercent * 100
+
+        if minapprovedamount:
+            qualcounter += 1
+            base = "QualificationRequirement.{0}." .format(qualcounter)
+            r[base + "QualificationTypeId"] = "00000000000000000040"
+            r[base + "Comparator"] = "GreaterThanOrEqualTo"
+            r[base + "IntegerValue"] = minapprovedamount * 100
 
         r["Question"] = "<ExternalQuestion xmlns=\"http://mechanicalturk.amazonaws.com/AWSMechanicalTurkDataSchemas/2006-07-14/ExternalQuestion.xsd\">" +\
         "<ExternalURL>{0}/{1}</ExternalURL>".format(self.localhost, page) +\

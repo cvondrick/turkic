@@ -315,12 +315,12 @@ class donation(Command):
         session = database.connect()
         try:
             donateyes = session.query(HIT)
-            donateyes = donateyes.filter(HIT.donatebonus == True)
+            donateyes = donateyes.filter(HIT.opt2donate == True)
             donateyes = donateyes.filter(HIT.completed == True)
             donateyes = donateyes.count()
 
             donateno = session.query(HIT)
-            donateno = donateno.filter(HIT.donatebonus == False)
+            donateno = donateno.filter(HIT.opt2donate == False)
             donateno = donateno.filter(HIT.completed == True)
             donateno = donateno.count()
 
@@ -329,9 +329,8 @@ class donation(Command):
                 percentyes = donateyes / float(completed) * 100
                 percentno = donateno / float(completed) * 100
 
-                donateamount = session.query(func.sum(HITGroup.bonus))
-                donateamount = donateamount.join(HIT)
-                donateamount = donateamount.filter(HIT.donatebonus == True)
+                donateamount = session.query(func.sum(HIT.donatedamount))
+                donateamount = donateamount.filter(HIT.completed == True)
                 donateamount = donateamount.one()[0]
 
                 if not donateamount:
