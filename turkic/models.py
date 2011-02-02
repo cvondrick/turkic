@@ -15,8 +15,10 @@ class HITGroup(database.Base):
     cost        = Column(Float, nullable = False)
     keywords    = Column(String(250), nullable = False)
     height      = Column(Integer, nullable = False, default = 650)
-    donation    = Column(Integer, default = False) # 0 = off, 1 = option, 2 = force
+    donation    = Column(Integer, default = 0) # 0 = off, 1 = option, 2 = force
     offline     = Column(Boolean, default = False)
+    minapprovedamount  = Column(Integer, default = None)
+    minapprovedpercent = Column(Integer, default = None)
 
 class Worker(database.Base):
     __tablename__ = "turkic_workers"
@@ -93,6 +95,8 @@ class HIT(database.Base):
             lifetime = self.group.lifetime,
             keywords = self.group.keywords,
             height = self.group.height,
+            minapprovedamount = self.group.minapprovedamount,
+            minapprovedpercent = self.group.minapprovedpercent,
             page = self.page)
         self.hitid = resp.hitid
         self.published = True

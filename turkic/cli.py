@@ -66,7 +66,9 @@ class LoadCommand(object):
                         cost = cost,
                         keywords = keywords,
                         donation  = donation,
-                        offline = args.offline)
+                        offline = args.offline,
+                        minapprovedamount = args.min_approved_amount,
+                        minapprovedpercent = args.min_approved_percent)
 
         self(args, group)
 
@@ -101,6 +103,8 @@ importparser.add_argument("--keywords", default = None)
 importparser.add_argument("--donation",
     choices = ['force', 'option', 'disable'], default = 'disable')
 importparser.add_argument("--offline", action="store_true")
+importparser.add_argument("--min-approved-percent", type=int)
+importparser.add_argument("--min-approved-amount", type=int)
 
 def main(args = None):
     """
