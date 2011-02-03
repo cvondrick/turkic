@@ -261,12 +261,13 @@ class compensate(Command):
         parser.add_argument("--bonus-reason", default = "Great job!")
         parser.add_argument("--accept", action="append", default = [])
         parser.add_argument("--reject", action="append", default = [])
+        parser.add_argument("--warn", action="append", default = [])
         parser.add_argument("--validated", action = "store_true")
         parser.add_argument("--default", default="defer",
-            choices=["accept", "reject", "defer"])
+            choices=["accept", "reject", "defer", "warn"])
         return parser
 
-    def process(self, hit, acceptkeys, rejectkeys, validated, default):
+    def process(self, hit, acceptkeys, rejectkeys, warnkeys, validated, default):
         if hit.validated and validated:
             if hit.accepted:
                 hit.accept()
@@ -274,22 +275,30 @@ class compensate(Command):
                 hit.reject()
         elif hit.assignmentid in acceptkeys:
             hit.accept()
+        elif hit.assignmentid in warnkeys:
+            hit.warn()
         elif hit.assignmentid in rejectkeys:
             hit.reject()
         elif default == "accept":
             hit.accept()
         elif default == "reject":
             hit.reject()
+        elif default == "warn":
+            hit.warn()
 
     def __call__(self, args):
         session = database.connect()
 
         acceptkeys = []
         rejectkeys = []
+        warnkeys = []
+
         for f in args.accept:
             acceptkeys.extend(line.strip() for line in open(f))
         for f in args.reject:
             rejectkeys.extend(line.strip() for line in open(f))
+        for f in args.warn:
+            warnkeys.extend(line.strip() for line in open(f))
             
         try:
             query = session.query(HIT)
@@ -300,7 +309,7 @@ class compensate(Command):
 
             for hit in query:
                 try:
-                    self.process(hit, acceptkeys, rejectkeys,
+                    self.process(hit, acceptkeys, rejectkeys, warnkeys,
                         args.validated, args.default)
                     if hit.compensated:
                         if hit.accepted:
