@@ -178,7 +178,7 @@ class status(Command):
         print ""
 
     def serverstatus(self, session):
-        available = session.query(HIT).count()
+        available = session.query(HIT).filter(HIT.ready == True).count()
         published = session.query(HIT).filter(HIT.published == True).count()
         completed = session.query(HIT).filter(HIT.completed == True).count()
         compensated = session.query(HIT).filter(HIT.compensated == True).count()
@@ -224,6 +224,7 @@ class publish(Command):
             query = session.query(HIT)
             query = query.join(HITGroup)
             query = query.filter(HITGroup.offline == args.offline)
+            query = query.filter(HIT.ready == True)
             if args.disable:
                 if args.offline:
                     print "Cannot disable offline HITs."

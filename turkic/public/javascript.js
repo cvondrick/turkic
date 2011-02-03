@@ -148,7 +148,7 @@ function mturk_showstatistics()
     var stc = $('<div id="turkic_workerstats"><div id="turkic_workerstatscontent"></div></div>');
     st = stc.children("#turkic_workerstatscontent");
 
-    server_workerstats(function(data) {
+    server_jobstats(function(data) {
         st.html("");
 
         var reward = $('<div id="turkic_workerstatsreward"></div>');
@@ -268,6 +268,20 @@ function mturk_showdonate(reward)
     });
 }
 
+function worker_isnewuser(iftrue, iffalse)
+{
+    server_jobstats(function(data) {
+        if (data["newuser"])
+        {
+            iftrue();
+        }
+        else
+        {
+            iffalse();
+        }
+    });
+}
+
 function server_geturl(action, parameters)
 {
     var url = "server/" + action;
@@ -314,25 +328,25 @@ function server_post(action, parameters, data, callback)
     });
 }
 
-var server_workerstats_data = null;
-function server_workerstats(callback)
+var server_jobstats_data = null;
+function server_jobstats(callback)
 {
-    if (server_workerstats_data == null)
+    if (server_jobstats_data == null)
     {
         var params = mturk_parameters();
         if (params.workerid)
         {
-            server_request("turkic_getworkerstats",
+            server_request("turkic_getjobstats",
                 [params.hitid, params.workerid],
                 function (data) {
-                    server_workerstats_data = data;
+                    server_jobstats_data = data;
                     callback(data);
                 });
         }
     }
     else
     {
-        callback(server_workerstats_data);
+        callback(server_jobstats_data);
     }
 }
 

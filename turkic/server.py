@@ -93,7 +93,7 @@ import models
 import database
 from datetime import datetime
 
-def getworkerstats(hitid, workerid):
+def getjobstats(hitid, workerid):
     """
     Returns the worker status as a dictionary for the server.
     """
@@ -121,6 +121,7 @@ def getworkerstats(hitid, workerid):
             status["numaccepted"] = worker.numacceptances
             status["numrejected"] = worker.numrejections
             status["numsubmitted"] = worker.numsubmitted
+            status["verified"] = worker.verified
         return status
 
     finally:
@@ -161,8 +162,8 @@ def markcomplete(hitid, assignmentid, workerid):
     finally:
         session.close()
 
-handlers["turkic_getworkerstats"] = \
-    (getworkerstats, "text/json", True, False, False)
+handlers["turkic_getjobstats"] = \
+    (getjobstats, "text/json", True, False, False)
 handlers["turkic_savejobstats"] = \
     (savejobstats, "text/json", True, False, True)
 handlers["turkic_markcomplete"] = \

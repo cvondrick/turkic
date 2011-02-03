@@ -3,6 +3,7 @@ from sqlalchemy import Column, Integer, String, Text, Float, Boolean, ForeignKey
 from sqlalchemy.orm import relationship, backref
 import database
 import random
+import copy
 
 class HITGroup(database.Base):
     __tablename__ = "turkic_hit_groups"
@@ -43,6 +44,11 @@ class Worker(database.Base):
     def email(self, subject, message):
         api.server.email(self.id, subject, message)
 
+    def markverified(self, status):
+        self.verified = status
+        if not self.verified:
+            self.block()
+
     @classmethod
     def lookup(self, session, workerid):
         worker = session.query(Worker)
@@ -68,6 +74,7 @@ class HIT(database.Base):
     assignmentid  = Column(String(30))
     workerid      = Column(String(14), ForeignKey(Worker.id), index = True)
     worker        = relationship(Worker, cascade = "all", backref = "tasks")
+    ready         = Column(Boolean, default = True, index = True)
     published     = Column(Boolean, default = False, index = True)
     completed     = Column(Boolean, default = False, index = True)
     compensated   = Column(Boolean, default = False, index = True)
@@ -85,6 +92,9 @@ class HIT(database.Base):
     bonusamount   = Column(Float, nullable = False, default = 0.0)
     verification  = Column(Boolean, default = False)
 
+    discriminator = Column("type", String(250))
+    __mapper_args__ = {"polymorphic_on": discriminator, "with_polymorphic": "*"}
+
     def publish(self):
         if self.published:
             raise RuntimeError("HIT cannot be published because it has already "
@@ -99,9 +109,12 @@ class HIT(database.Base):
             height = self.group.height,
             minapprovedamount = self.group.minapprovedamount,
             minapprovedpercent = self.group.minapprovedpercent,
-            page = self.page)
+            page = self.getpage())
         self.hitid = resp.hitid
         self.published = True
+
+    def getpage(self):
+        raise NotImplementedError()
 
     def markcompleted(self, workerid, assignmentid):
         try:
@@ -197,7 +210,7 @@ class BonusSchedule(database.Base):
 
 class ConstantBonus(BonusSchedule):
     __tablename__ = "turkic_bonus_schedule_constant"
-    __maper_args__ = {'polymorphic_identity': "turkic_constant"}
+    __maper_args__ = {"polymorphic_identity": "turkic_constant"}
 
     id = Column(Integer, ForeignKey(BonusSchedule.id), primary_key = True)
     amount = Column(Float, nullable = False)
@@ -210,18 +223,18 @@ class ConstantBonus(BonusSchedule):
         return (self.amount, "bonus")
 
 reasons = ["Thanks for your hard work!",
-          "Excellent work!",
-          "Excellent job!",
-          "Great work!",
-          "Great job!",
-          "Fantastic job!",
-          "Perfect!",
-          "Thank you!",
-          "Please keep working!",
-          "Your work is helping advance research.",
-          "We appreciate your work.",
-          "Please keep working.",
-          "You are doing an excellent job.",
-          "You are doing a great job.",
-          "You are doing a superb job.",
-          "Keep up the fantastic work!"]
+           "Excellent work!",
+           "Excellent job!",
+           "Great work!",
+           "Great job!",
+           "Fantastic job!",
+           "Perfect!",
+           "Thank you!",
+           "Please keep working!",
+           "Your work is helping advance research.",
+           "We appreciate your work.",
+           "Please keep working.",
+           "You are doing an excellent job.",
+           "You are doing a great job.",
+           "You are doing a superb job.",
+           "Keep up the fantastic work!"]
