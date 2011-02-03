@@ -148,6 +148,15 @@ class HIT(database.Base):
         self.compensated = True
         self.worker.numacceptances += 1
 
+    def warn(self, reason = None):
+        if not reason:
+            reason = ("Warning: we will start REJECTING your work soon if you do "
+            "not improve your quality. Please reread the instructions.")
+        api.server.accept(self.assignmentid, reason)
+        self.accepted = True
+        self.compensated = True
+        self.worker.numacceptances += 1
+
     def reject(self, reason = ""):
         api.server.reject(self.assignmentid, reason)
         self.accepted = False
