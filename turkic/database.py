@@ -14,14 +14,14 @@ except ImportError:
     pass
 else:
     engine = create_engine(config.database)
-    RawSession = sessionmaker(bind=engine)
-    Session = scoped_session(RawSession)
+    Session = sessionmaker(bind=engine)
+    session = scoped_session(Session)
 
     def connect():
         """
         Generates a database connection.
         """
-        return RawSession()
+        return Session()
 
     def install():
         """

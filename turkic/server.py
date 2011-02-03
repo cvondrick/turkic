@@ -12,7 +12,7 @@ the 'handler' decorator. Example:
 """
 
 import json
-from turkic.database import Session
+from turkic.database import session
 
 handlers = {}
 
@@ -72,7 +72,7 @@ def application(environ, start_response):
         try:
             response = handler(*args)
         finally:
-            Session.remove()
+            session.remove()
     except Error404 as e:
         start_response("404 Not Found", [("Content-Type", "text/plain")])
         return ["Error 404\n", str(e)]

@@ -10,7 +10,7 @@ import database
 import argparse
 from turkic.api import CommunicationError
 from turkic.models import *
-from turkic.database import Session
+from turkic.database import session
 from sqlalchemy import func
 
 handlers = {}
@@ -126,7 +126,7 @@ def main(args = None):
             try:
                 handler(args[1:])
             finally:
-                Session.remove()
+                session.remove()
 
 def help(args = None):
     """
