@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 import logging
 
@@ -14,13 +14,14 @@ except ImportError:
     pass
 else:
     engine = create_engine(config.database)
-    Session = sessionmaker(bind=engine)
+    RawSession = sessionmaker(bind=engine)
+    Session = scoped_session(RawSession)
 
     def connect():
         """
         Generates a database connection.
         """
-        return Session()
+        return RawSession()
 
     def install():
         """

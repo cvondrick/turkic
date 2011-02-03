@@ -10,6 +10,7 @@ import database
 import argparse
 from turkic.api import CommunicationError
 from turkic.models import *
+from turkic.database import Session
 from sqlalchemy import func
 
 handlers = {}
@@ -122,7 +123,10 @@ def main(args = None):
         except KeyError:
             print "Error: Unknown action {0}".format(args[0])
         else:
-            handler(args[1:])
+            try:
+                handler(args[1:])
+            finally:
+                Session.remove()
 
 def help(args = None):
     """
