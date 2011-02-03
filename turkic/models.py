@@ -27,17 +27,18 @@ class Worker(database.Base):
     numsubmitted   = Column(Integer, nullable = False, default = 0)
     numacceptances = Column(Integer, nullable = False, default = 0)
     numrejections  = Column(Integer, nullable = False, default = 0)
-    trained        = Column(Boolean, default = False)
-    trusted        = Column(Boolean, default = False)
     blocked        = Column(Boolean, default = False)
     donatedamount  = Column(Float, default = 0.0, nullable = False)
     bonusamount    = Column(Float, default = 0.0, nullable = False)
+    verified       = Column(Boolean, default = False)
 
     def block(self):
         api.server.block(self.id)
+        self.blocked = True
 
     def unblock(self):
         api.server.unblock(self.id)
+        self.blocked = False
 
     def email(self, subject, message):
         api.server.email(self.id, subject, message)
@@ -82,6 +83,7 @@ class HIT(database.Base):
     opt2donate    = Column(Boolean, default = False)
     donatedamount = Column(Float, nullable = False, default = 0.0)
     bonusamount   = Column(Float, nullable = False, default = 0.0)
+    verification  = Column(Boolean, default = False)
 
     def publish(self):
         if self.published:
