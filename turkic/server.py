@@ -16,6 +16,9 @@ from turkic.database import session
 
 handlers = {}
 
+import logging
+logger = logging.getLogger("turkic.server")
+
 try:
     from wsgilog import log as wsgilog
 except ImportError:
@@ -46,6 +49,8 @@ def application(environ, start_response):
     with the 'handler' decorator.
     """
     path = environ.get("PATH_INFO", "").lstrip("/").split("/")
+
+    logger.info("Got HTTP request: {0}".format("/".join(path)))
 
     try:
         action = path[0]
@@ -94,77 +99,63 @@ class Error404(Exception):
 
 
 import models
-import database
 from datetime import datetime
 
 def getjobstats(hitid, workerid):
     """
     Returns the worker status as a dictionary for the server.
     """
-    session = database.connect()
+    status = {}
+
+    hit = session.query(models.HIT)
+    hit = hit.filter(models.HIT.hitid == hitid)
+    hit = hit.one()
+
+    status["reward"] = hit.group.cost
+    status["donationcode"] = hit.group.donation
+    status["bonuses"] = [x.description() for x in hit.group.schedules]
+    
+    worker = session.query(models.Worker)
+    worker = worker.filter(models.Worker.id == workerid)
+
     try:
-        status = {}
-
-        hit = session.query(models.HIT)
-        hit = hit.filter(models.HIT.hitid == hitid)
-        hit = hit.one()
-
-        status["reward"] = hit.group.cost
-        status["donationcode"] = hit.group.donation
-        status["bonuses"] = [x.description() for x in hit.group.schedules]
-        
-        worker = session.query(models.Worker)
-        worker = worker.filter(models.Worker.id == workerid)
-
-        try:
-            worker = worker.one()
-        except:
-            status["newuser"] = True
-        else:
-            status["newuser"] = False
-            status["numaccepted"] = worker.numacceptances
-            status["numrejected"] = worker.numrejections
-            status["numsubmitted"] = worker.numsubmitted
-            status["verified"] = worker.verified
-        return status
-
-    finally:
-        session.close()
+        worker = worker.one()
+    except:
+        status["newuser"] = True
+    else:
+        status["newuser"] = False
+        status["numaccepted"] = worker.numacceptances
+        status["numrejected"] = worker.numrejections
+        status["numsubmitted"] = worker.numsubmitted
+        status["verified"] = worker.verified
+    return status
 
 def savejobstats(hitid, timeaccepted, timecompleted, donate, environ):
     """
     Saves statistics for a job.
     """
-    session = database.connect()
-    try:
-        hit = session.query(models.HIT).filter(models.HIT.hitid == hitid).one()
+    hit = session.query(models.HIT).filter(models.HIT.hitid == hitid).one()
 
-        hit.timeaccepted = datetime.fromtimestamp(int(timeaccepted) / 1000)
-        hit.timecompleted = datetime.fromtimestamp(int(timecompleted) / 1000)
-        hit.timeonserver = datetime.now()
-        hit.opt2donate = donate
+    hit.timeaccepted = datetime.fromtimestamp(int(timeaccepted) / 1000)
+    hit.timecompleted = datetime.fromtimestamp(int(timecompleted) / 1000)
+    hit.timeonserver = datetime.now()
+    hit.opt2donate = donate
 
-        hit.ipaddress = environ.get("HTTP_X_FORWARDED_FOR", None)
-        hit.ipaddress = environ.get("REMOTE_ADDR", hit.ipaddress)
+    hit.ipaddress = environ.get("HTTP_X_FORWARDED_FOR", None)
+    hit.ipaddress = environ.get("REMOTE_ADDR", hit.ipaddress)
 
-        session.add(hit)
-        session.commit()
-    finally:
-        session.close()
+    session.add(hit)
+    session.commit()
 
 def markcomplete(hitid, assignmentid, workerid):
     """
     Marks a job as complete. Usually this is called right before the
     MTurk form is submitted.
     """
-    session = database.connect()
-    try:
-        hit = session.query(models.HIT).filter(models.HIT.hitid == hitid).one()
-        hit.markcompleted(workerid, assignmentid)
-        session.add(hit)
-        session.commit()
-    finally:
-        session.close()
+    hit = session.query(models.HIT).filter(models.HIT.hitid == hitid).one()
+    hit.markcompleted(workerid, assignmentid)
+    session.add(hit)
+    session.commit()
 
 handlers["turkic_getjobstats"] = \
     (getjobstats, "text/json", True, False, False)

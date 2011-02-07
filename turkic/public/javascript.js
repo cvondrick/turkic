@@ -101,8 +101,9 @@ function mturk_submit(callback)
     // function that must be called to formally complete transaction
     function redirect()
     {
-        server_request("turkic_markcomplete",
-            [params.hitid, params.assignmentid, params.workerid],
+        var donateyes = $("#turkic_donate_yes").attr("checked") ? 1 : 0;
+        server_request("turkic_savejobstats", 
+            [params.hitid, turkic_timeaccepted, now, donateyes], 
             function() {
                 $("#turkic_mturk").submit();
             });
@@ -114,10 +115,11 @@ function mturk_submit(callback)
     }
     else
     {
-        var donateyes = $("#turkic_donate_yes").attr("checked") ? 1 : 0;
-        server_request("turkic_savejobstats", [params.hitid, turkic_timeaccepted, now, donateyes], function() {
-            callback(redirect);
-        });
+        server_request("turkic_markcomplete",
+            [params.hitid, params.assignmentid, params.workerid],
+            function() {
+                callback(redirect);
+            });
     }
 }
 
@@ -268,18 +270,26 @@ function mturk_showdonate(reward)
     });
 }
 
-function worker_isnewuser(iftrue, iffalse)
+function worker_needsverification(iftrue, iffalse)
 {
-    server_jobstats(function(data) {
-        if (data["newuser"])
-        {
-            iftrue();
-        }
-        else
-        {
-            iffalse();
-        }
-    });
+    if (mturk_isassigned())
+    {
+        server_jobstats(function(data) {
+            if (data["newuser"])
+            {
+                iftrue();
+            }
+            else
+            {
+                iffalse();
+            }
+        });
+    }
+    else
+    {
+        // not accepted, so assume verified to create illusion
+        iffalse();
+    }
 }
 
 function server_geturl(action, parameters)
@@ -342,6 +352,10 @@ function server_jobstats(callback)
                     server_jobstats_data = data;
                     callback(data);
                 });
+        }
+        else
+        {
+            death("Job stats unavailable");
         }
     }
     else

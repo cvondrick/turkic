@@ -61,15 +61,15 @@ class LoadCommand(object):
             donation = 2
 
         group = HITGroup(title = title,
-                        description = description,
-                        duration = duration,
-                        lifetime = lifetime,
-                        cost = cost,
-                        keywords = keywords,
-                        donation  = donation,
-                        offline = args.offline,
-                        minapprovedamount = args.min_approved_amount,
-                        minapprovedpercent = args.min_approved_percent)
+                         description = description,
+                         duration = duration,
+                         lifetime = lifetime,
+                         cost = cost,
+                         keywords = keywords,
+                         donation  = donation,
+                         offline = args.offline,
+                         minapprovedamount = args.min_approved_amount,
+                         minapprovedpercent = args.min_approved_percent)
 
         self(args, group)
 
@@ -375,19 +375,32 @@ class setup(Command):
         parser.add_argument("--no-confirm", action="store_true")
         return parser
 
+    def resetdatabase(self):
+        try:
+            hits = session.query(HIT)
+            hits = hits.filter(HIT.published == True)
+            hits = hits.filter(HIT.completed == False)
+            for hit in hits:
+                print "Disabled HIT {0}".format(hit.hitid)
+                hit.disable()
+        except:
+            print "Failed disabling online HITs. Disable manually with:"
+            print "\timport config, turkic.api"
+            print "\tturkic.api.server.purge()"
+        database.reinstall()
+        print "Database reset!"
+
     def database(self, args):
         import turkic.models
         import models
 
         if args.reset:
             if args.no_confirm:
-                database.reinstall()
-                print "Database reset!"
+                self.resetdatabase()
             else:
                 resp = raw_input("Reset database? ").lower()
                 if resp in ["yes", "y"]:
-                    database.reinstall()
-                    print "Database reset!"
+                    self.resetdatabase()
                 else:
                     print "Aborted. No changes to database."
         else:

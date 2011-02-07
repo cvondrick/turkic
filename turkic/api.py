@@ -4,7 +4,12 @@ import hashlib
 import hmac
 import httplib
 import urllib
+from math import ceil
 from xml.etree import ElementTree
+
+import logging
+
+logger = logging.getLogger("turkic.api")
 
 class Server(object):
     def __init__(self, signature, accesskey, localhost, sandbox = False):
@@ -18,6 +23,8 @@ class Server(object):
         else:
             self.server = "mechanicalturk.amazonaws.com:80"
 
+        logger.debug("Configured server for {0}".format(self.server))
+
     def request(self, operation, parameters = {}):
         """
         Sends the request to the Turk server and returns a response object.
@@ -30,6 +37,10 @@ class Server(object):
         hmacstr = hmac.new(config.signature,
             "AWSMechanicalTurkRequester" + operation + timestamp, hashlib.sha1)
         hmacstr = base64.encodestring(hmacstr.digest()).strip()
+
+        logger.info("Request to MTurk: {0}".format(operation))
+        for paramk, paramv in parameters.items():
+            logger.debug("  {0}: {1}".format(paramk, paramv))
 
         baseurl = "/?" + urllib.urlencode({
                     "Service": "AWSMechanicalTurkRequester",
@@ -102,6 +113,27 @@ class Server(object):
         r = self.request("DisableHIT", {"HITId": hitid})
         r.validate("DisableHITResult/Request/IsValid", "DisableHITResult/Request/Errors/Error/Message")
         return r
+
+    def purge(self):
+        """
+        Disables all the HITs on the MTurk server. Useful for debugging.
+        """
+        while True:
+            r = self.request("SearchHITs", {"SortProperty": "CreationTime",
+                                            "SortDirection": "Descending",
+                                            "PageSize": "100",
+                                            "PageNumber": "1"})
+            r.validate("SearchHITsResult/Request/IsValid")
+            r.store("SearchHITsResult/TotalNumResults", "num", int)
+            if r.num == 0:
+                return
+            for hit in r.tree.findall("SearchHITsResult/HIT"):
+                hitid = hit.find("HITId").text.strip()
+                try:
+                    self.disable(hitid)
+                except CommunicationError:
+                    pass
+            print "Next page"
 
     def accept(self, assignmentid, feedback = ""):
         """
@@ -273,4 +305,7 @@ try:
 except ImportError:
     pass
 else:
-    server = Server(config.signature, config.accesskey, config.localhost, config.sandbox)
+    server = Server(config.signature,
+                    config.accesskey,
+                    config.localhost,
+                    config.sandbox)

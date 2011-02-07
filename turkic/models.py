@@ -1,25 +1,28 @@
 import api
-from sqlalchemy import Column, Integer, String, Text, Float, Boolean, ForeignKey, Index, DateTime, Numeric
+from sqlalchemy import Column, Integer, String, Text, Float, Boolean
+from sqlalchemy import ForeignKey, Index, DateTime, Numeric
 from sqlalchemy.orm import relationship, backref
 import database
 import random
-import copy
+import logging
+
+logger = logging.getLogger("turkic.models")
 
 class HITGroup(database.Base):
     __tablename__ = "turkic_hit_groups"
 
-    id          = Column(Integer, primary_key = True)
-    title       = Column(String(250), nullable = False)
-    description = Column(String(250), nullable = False)
-    duration    = Column(Integer, nullable = False)
-    lifetime    = Column(Integer, nullable = False)
-    cost        = Column(Float, nullable = False)
-    keywords    = Column(String(250), nullable = False)
-    height      = Column(Integer, nullable = False, default = 650)
-    donation    = Column(Integer, default = 0) # 0 = off, 1 = option, 2 = force
-    offline     = Column(Boolean, default = False)
-    minapprovedamount  = Column(Integer, default = None)
-    minapprovedpercent = Column(Integer, default = None)
+    id                  = Column(Integer, primary_key = True)
+    title               = Column(String(250), nullable = False)
+    description         = Column(String(250), nullable = False)
+    duration            = Column(Integer, nullable = False)
+    lifetime            = Column(Integer, nullable = False)
+    cost                = Column(Float, nullable = False)
+    keywords            = Column(String(250), nullable = False)
+    height              = Column(Integer, nullable = False, default = 650)
+    donation            = Column(Integer, default = 0) # 0=off, 1=option, 2=force
+    offline             = Column(Boolean, default = False)
+    minapprovedamount   = Column(Integer, default = None)
+    minapprovedpercent  = Column(Integer, default = None)
 
 class Worker(database.Base):
     __tablename__ = "turkic_workers"
@@ -44,24 +47,24 @@ class Worker(database.Base):
     def email(self, subject, message):
         api.server.email(self.id, subject, message)
 
-    def markverified(self, status):
-        self.verified = status
-        if not self.verified:
-            self.block()
-
     @classmethod
-    def lookup(self, session, workerid):
+    def lookup(self, workerid, session = None):
+        if not session:
+            session = database.session
+
         worker = session.query(Worker)
         worker = worker.filter(Worker.id == workerid)
 
         if worker.count() > 0:
             worker = worker.one()
+            logger.debug("Found existing worker {0}".format(workerid))
         else:
             worker = Worker(
                 id = workerid,
                 numsubmitted = 0,
                 numacceptances = 0,
                 numrejections = 0)
+            logger.debug("Created new worker {0}".format(workerid))
         return worker
 
 class HIT(database.Base):
@@ -90,7 +93,6 @@ class HIT(database.Base):
     opt2donate    = Column(Boolean, default = False)
     donatedamount = Column(Float, nullable = False, default = 0.0)
     bonusamount   = Column(Float, nullable = False, default = 0.0)
-    verification  = Column(Boolean, default = False)
 
     discriminator = Column("type", String(250))
     __mapper_args__ = {"polymorphic_on": discriminator, "with_polymorphic": "*"}
@@ -112,6 +114,7 @@ class HIT(database.Base):
             page = self.getpage())
         self.hitid = resp.hitid
         self.published = True
+        logger.debug("Published HIT {0}".format(self.hitid))
 
     def getpage(self):
         raise NotImplementedError()
@@ -121,7 +124,7 @@ class HIT(database.Base):
             workerid.numsubmitted
         except:
             session = database.Session.object_session(self)
-            worker = Worker.lookup(session, workerid)
+            worker = Worker.lookup(workerid, session)
         else:
             worker = workerid
             
@@ -129,6 +132,8 @@ class HIT(database.Base):
         self.assignmentid = assignmentid
         self.worker = worker
         self.worker.numsubmitted += 1
+
+        logger.debug("HIT {0} marked complete".format(self.hitid))
 
     def disable(self):
         if not self.published:
@@ -139,6 +144,7 @@ class HIT(database.Base):
         oldhitid = self.hitid
         self.published = False
         self.hitid = None
+        logger.debug("HIT (was {0}) disabled".format(oldhitid))
         return oldhitid
 
     def accept(self, reason = None, bs = True):
@@ -161,6 +167,8 @@ class HIT(database.Base):
         self.compensated = True
         self.worker.numacceptances += 1
 
+        logger.debug("Accepted work for HIT {0}".format(self.hitid))
+
     def warn(self, reason = None):
         if not reason:
             reason = ("Warning: we will start REJECTING your work soon if you do "
@@ -170,17 +178,25 @@ class HIT(database.Base):
         self.compensated = True
         self.worker.numacceptances += 1
 
+        logger.debug("Accepted, but warned for HIT {0}".format(self.hitid))
+
     def reject(self, reason = ""):
         api.server.reject(self.assignmentid, reason)
         self.accepted = False
         self.compensated = True
         self.worker.numrejections += 1
+
+        logger.debug("Rejected work for HIT {0}".format(self.hitid))
     
     def awardbonus(self, amount, reason = None, bs = True):
         if self.opt2donate:
+            logger.debug("Awarding bonus of {0} on HIT {1}, but worker opted to "
+                         "donate".format(amount, self.hitid))
             self.donatedamount += amount
             self.worker.donatedamount += amount
         else:
+            logger.debug("Awarding bonus of {0} on HIT {1}"
+                         .format(amount, self.hitid))
             self.bonusamount += amount
             self.worker.donatedamount += amount
             if not reason:
@@ -191,7 +207,7 @@ class HIT(database.Base):
             api.server.bonus(self.workerid, self.assignmentid, amount, reason)
 
     def offlineurl(self, localhost):
-        return "{0}{1}&hitId=offline".format(localhost, self.page)
+        return "{0}{1}&hitId=offline".format(localhost, self.getpage())
 
 class BonusSchedule(database.Base):
     __tablename__ = "turkic_bonus_schedules"
