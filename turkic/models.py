@@ -19,7 +19,9 @@ class HITGroup(database.Base):
     cost                = Column(Float, nullable = False)
     keywords            = Column(String(250), nullable = False)
     height              = Column(Integer, nullable = False, default = 650)
-    donation            = Column(Integer, default = 0) # 0=off, 1=option, 2=force
+    donation            = Column(Integer, default = 0) # 0=off,
+                                                       # 1=option,
+                                                       # 2=force
     offline             = Column(Boolean, default = False)
     minapprovedamount   = Column(Integer, default = None)
     minapprovedpercent  = Column(Integer, default = None)
@@ -95,12 +97,13 @@ class HIT(database.Base):
     bonusamount   = Column(Float, nullable = False, default = 0.0)
 
     discriminator = Column("type", String(250))
-    __mapper_args__ = {"polymorphic_on": discriminator, "with_polymorphic": "*"}
+    __mapper_args__ = {"polymorphic_on": discriminator,
+                       "with_polymorphic": "*"}
 
     def publish(self):
         if self.published:
-            raise RuntimeError("HIT cannot be published because it has already "
-                "been published.")
+            raise RuntimeError("HIT cannot be published because it has already"
+                " been published.")
         resp = api.server.createhit(
             title = self.group.title,
             description = self.group.description,
@@ -137,9 +140,11 @@ class HIT(database.Base):
 
     def disable(self):
         if not self.published:
-            raise RuntimeError("HIT cannot be disabled because it is not published")
+            raise RuntimeError("HIT cannot be disabled because "
+                               "it is not published")
         if self.completed:
-            raise RuntimeError("HIT cannot be disabled because it is completed")
+            raise RuntimeError("HIT cannot be disabled because "
+                               "it is completed")
         api.server.disable(self.hitid)
         oldhitid = self.hitid
         self.published = False
@@ -171,8 +176,8 @@ class HIT(database.Base):
 
     def warn(self, reason = None):
         if not reason:
-            reason = ("Warning: we will start REJECTING your work soon if you do "
-            "not improve your quality. Please reread the instructions.")
+            reason = ("Warning: we will start REJECTING your work soon if you"
+            "do not improve your quality. Please reread the instructions.")
         api.server.accept(self.assignmentid, reason)
         self.accepted = True
         self.compensated = True
@@ -190,8 +195,8 @@ class HIT(database.Base):
     
     def awardbonus(self, amount, reason = None, bs = True):
         if self.opt2donate:
-            logger.debug("Awarding bonus of {0} on HIT {1}, but worker opted to "
-                         "donate".format(amount, self.hitid))
+            logger.debug("Awarding bonus of {0} on HIT {1}, but worker opted "
+                         "to donate".format(amount, self.hitid))
             self.donatedamount += amount
             self.worker.donatedamount += amount
         else:

@@ -28,11 +28,9 @@ except ImportError:
     Session = None
 else:
     engine = create_engine(config.database)
-    logger.debug("Created engine to {0}".format(config.database))
 
     Session = sessionmaker(bind=engine)
     session = scoped_session(Session)
-    logger.debug("Created scoped session")
 
     def connect():
         """

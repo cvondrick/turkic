@@ -23,8 +23,6 @@ class Server(object):
         else:
             self.server = "mechanicalturk.amazonaws.com:80"
 
-        logger.debug("Configured server for {0}".format(self.server))
-
     def request(self, operation, parameters = {}):
         """
         Sends the request to the Turk server and returns a response object.
@@ -95,10 +93,13 @@ class Server(object):
             r[base + "Comparator"] = "GreaterThanOrEqualTo"
             r[base + "IntegerValue"] = minapprovedamount 
 
-        r["Question"] = "<ExternalQuestion xmlns=\"http://mechanicalturk.amazonaws.com/AWSMechanicalTurkDataSchemas/2006-07-14/ExternalQuestion.xsd\">" +\
-        "<ExternalURL>{0}/{1}</ExternalURL>".format(self.localhost, page) +\
-        "<FrameHeight>{0}</FrameHeight>".format(height) +\
-        "</ExternalQuestion>"
+        r["Question"] = ("<ExternalQuestion xmlns=\"http://mechanicalturk"
+                         ".amazonaws.com/AWSMechanicalTurkDataSchemas/"
+                         "2006-07-14/ExternalQuestion.xsd\">"
+                         "<ExternalURL>{0}/{1}</ExternalURL>"
+                         "<FrameHeight>{2}</FrameHeight>"
+                         "</ExternalQuestion>").format(self.localhost,
+                                                       page, height)
 
         r = self.request("CreateHIT", r);
         r.validate("HIT/Request/IsValid", "HIT/Request/Errors/Error/Message")
@@ -111,7 +112,8 @@ class Server(object):
         Disables the HIT from the MTurk service.
         """
         r = self.request("DisableHIT", {"HITId": hitid})
-        r.validate("DisableHITResult/Request/IsValid", "DisableHITResult/Request/Errors/Error/Message")
+        r.validate("DisableHITResult/Request/IsValid",
+                   "DisableHITResult/Request/Errors/Error/Message")
         return r
 
     def purge(self):
@@ -139,16 +141,22 @@ class Server(object):
         """
         Accepts the assignment and pays the worker.
         """
-        r = self.request("ApproveAssignment", {"AssignmentId": assignmentid, "RequesterFeedback": feedback})
-        r.validate("ApproveAssignmentResult/Request/IsValid", "ApproveAssignmentResult/Request/Errors/Error/Message")
+        r = self.request("ApproveAssignment",
+                         {"AssignmentId": assignmentid,
+                          "RequesterFeedback": feedback})
+        r.validate("ApproveAssignmentResult/Request/IsValid",
+                   "ApproveAssignmentResult/Request/Errors/Error/Message")
         return r
 
     def reject(self, assignmentid, feedback = ""):
         """
         Rejects the assignment and does not pay the worker.
         """
-        r = self.request("RejectAssignment", {"AssignmentId": assignmentid, "RequesterFeedback": feedback})
-        r.validate("RejectAssignmentResult/Request/IsValid", "RejectAssignmentResult/Request/Errors/Error/Message")
+        r = self.request("RejectAssignment",
+                         {"AssignmentId": assignmentid,
+                          "RequesterFeedback": feedback})
+        r.validate("RejectAssignmentResult/Request/IsValid",
+                   "RejectAssignmentResult/Request/Errors/Error/Message")
         return r
 
     def bonus(self, workerid, assignmentid, amount, feedback = ""):
@@ -161,52 +169,65 @@ class Server(object):
              "BonusAmount.1.Amount": amount,
              "BonusAmount.1.CurrencyCode": "USD",
              "Reason": feedback});
-        r.validate("GrantBonusResult/Request/IsValid", "GrantBonusResult/Request/Errors/Error/Message")
+        r.validate("GrantBonusResult/Request/IsValid",
+                   "GrantBonusResult/Request/Errors/Error/Message")
         return r
 
     def block(self, workerid, reason = ""):
         """
         Blocks the worker from working on any of our HITs.
         """
-        r = self.request("BlockWorker", {"WorkerId": workerid, "Reason": reason})
-        r.validate("BlockWorkerResult/Request/IsValid", "BlockWorkerResult/Request/Errors/Error/Message")
+        r = self.request("BlockWorker", {"WorkerId": workerid,
+                                         "Reason": reason})
+        r.validate("BlockWorkerResult/Request/IsValid",
+                   "BlockWorkerResult/Request/Errors/Error/Message")
         return r
 
     def unblock(self, workerid, reason = ""):
         """
         Unblocks the worker and allows him to work for us again.
         """
-        r = self.request("UnblockWorker", {"WorkerId": workerid, "Reason": reason})
-        r.validate("UnblockWorkerResult/Request/IsValid", "UnblockWorkerResult/Request/Errors/Error/Message")
+        r = self.request("UnblockWorker", {"WorkerId": workerid,
+                                           "Reason": reason})
+        r.validate("UnblockWorkerResult/Request/IsValid",
+                   "UnblockWorkerResult/Request/Errors/Error/Message")
         return r
 
     def email(self, workerid, subject, message):
         """
         Sends an email to the worker.
         """
-        r = self.request("NotifyWorkers", {"Subject": subject, "MessageText": message, "WorkerId.1": workerid})
-        r.validate("NotifyWorkersResult/Request/IsValid", "NotifyWorkersResult/Request/Errors/Error/Message")
+        r = self.request("NotifyWorkers", {"Subject": subject,
+                                           "MessageText": message,
+                                           "WorkerId.1": workerid})
+        r.validate("NotifyWorkersResult/Request/IsValid",
+                   "NotifyWorkersResult/Request/Errors/Error/Message")
         return r
 
     def getstatistic(self, statistic, type, timeperiod = "LifeToDate"):
         """
         Returns the total reward payout.
         """
-        r = self.request("GetRequesterStatistic", {"Statistic": statistic, "TimePeriod": timeperiod})
+        r = self.request("GetRequesterStatistic", {"Statistic": statistic,
+                                                   "TimePeriod": timeperiod})
         r.validate("GetStatisticResult/Request/IsValid")
         xmlvalue = "LongValue" if type is int else "DoubleValue"
-        r.store("GetStatisticResult/DataPoint/{0}".format(xmlvalue), "value", type)
+        r.store("GetStatisticResult/DataPoint/{0}".format(xmlvalue),
+                "value", type)
         return r.value
 
     @property
     def balance(self):
         """
-        Returns a response object with the available balance in the amount attribute.
+        Returns a response object with the available balance in the amount
+        attribute.
         """
         r = self.request("GetAccountBalance")
         r.validate("GetAccountBalanceResult/Request/IsValid")
-        r.store("GetAccountBalanceResult/AvailableBalance/Amount", "amount", float)
-        r.store("GetAccountBalanceResult/AvailableBalance/CurrencyCode", "currency")
+        r.store("GetAccountBalanceResult/AvailableBalance/Amount",
+                "amount", float)
+        r.store("GetAccountBalanceResult/AvailableBalance/CurrencyCode",
+                "currency")
         return r.amount
 
     @property
@@ -254,7 +275,8 @@ class Response(object):
         """
         Validates the response and raises an exception if invalid.
         
-        Valid contains a path that must contain False if the response is invalid.
+        Valid contains a path that must contain False if the response
+        is invalid.
         
         If errormessage is not None, use this field as the error description.
         """
