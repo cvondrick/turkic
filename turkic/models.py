@@ -38,12 +38,12 @@ class Worker(database.Base):
     bonusamount    = Column(Float, default = 0.0, nullable = False)
     verified       = Column(Boolean, default = False)
 
-    def block(self):
-        api.server.block(self.id)
+    def block(self, reason):
+        api.server.block(self.id, reason)
         self.blocked = True
 
-    def unblock(self):
-        api.server.unblock(self.id)
+    def unblock(self, reason):
+        api.server.unblock(self.id, reason)
         self.blocked = False
 
     def email(self, subject, message):
