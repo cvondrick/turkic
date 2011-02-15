@@ -84,6 +84,7 @@ def application(environ, start_response):
     else:
         start_response("200 OK", [("Content-Type", type)])
         if jsonify:
+            logger.debug("Response to " + str(path) + ": " + str(response))
             return [json.dumps(response)]
         else:
             return response
@@ -122,6 +123,10 @@ def getjobstats(hitid, workerid):
         worker = worker.one()
     except:
         status["newuser"] = True
+        status["numaccepted"] = 0
+        status["numrejected"] = 0
+        status["numsubmitted"] = 0
+        status["verified"] = False
     else:
         status["newuser"] = False
         status["numaccepted"] = worker.numacceptances

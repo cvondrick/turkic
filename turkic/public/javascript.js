@@ -158,8 +158,6 @@ function mturk_showstatistics()
         var donationenabled = data["donationcode"] == 1;
         var bonuses = data["bonuses"]
 
-        console.dir(data);
-
         var rewardstr = '<div class="turkic_workerstatsnumber">' + amount + ' &cent;</div> pay';
 
         for (var i in bonuses)
@@ -270,12 +268,12 @@ function mturk_showdonate(reward)
     });
 }
 
-function worker_needsverification(iftrue, iffalse)
+function worker_isverified(iftrue, iffalse)
 {
     if (mturk_isassigned())
     {
         server_jobstats(function(data) {
-            if (data["newuser"])
+            if (data["verified"])
             {
                 iftrue();
             }
@@ -288,7 +286,7 @@ function worker_needsverification(iftrue, iffalse)
     else
     {
         // not accepted, so assume verified to create illusion
-        iffalse();
+        iftrue();
     }
 }
 
