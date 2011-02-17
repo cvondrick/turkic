@@ -27,7 +27,7 @@ except ImportError:
     session = None
     Session = None
 else:
-    engine = create_engine(config.database)
+    engine = create_engine(config.database, pool_recycle = 3600)
 
     Session = sessionmaker(bind=engine)
     session = scoped_session(Session)
