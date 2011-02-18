@@ -84,7 +84,8 @@ def application(environ, start_response):
     else:
         start_response("200 OK", [("Content-Type", type)])
         if jsonify:
-            logger.debug("Response to " + str(path) + ": " + str(response))
+            logger.debug("Response to " + str("/".join(path)) + ": " + 
+                str(response))
             return [json.dumps(response)]
         else:
             return response
