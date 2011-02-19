@@ -416,11 +416,11 @@ class workers(Command):
         parser = argparse.ArgumentParser()
         parser.add_argument("--load")
         parser.add_argument("--dump")
+        return parser
 
     def __call__(self, args):
-        if args.dump:
-            with open(args.dump) as file:
-                for line in file:
+        if args.load:
+            with open(args.load) as file:
                     data = line.split(" ")
                     worker = Worker.lookup(data[0])
                     worker.numsubmitted = int(data[1])
@@ -432,24 +432,24 @@ class workers(Command):
                     worker.verified = float(data[7])
                     session.add(worker)
             session.commit()
-        elif args.load:
-            with open(args.load, "w") as file:
+        elif args.dump:
+            with open(args.dump, "w") as file:
                 for worker in session.query(Worker):
                     file.write(worker.id)
                     file.write(" ")
-                    file.write(worker.numsubmitted)
+                    file.write(str(worker.numsubmitted))
                     file.write(" ")
-                    file.write(worker.numacceptances)
+                    file.write(str(worker.numacceptances))
                     file.write(" ")
-                    file.write(worker.numrejections)
+                    file.write(str(worker.numrejections))
                     file.write(" ")
-                    file.write(worker.blocked)
+                    file.write(str(worker.blocked))
                     file.write(" ")
-                    file.write(worker.donatedamount)
+                    file.write(str(worker.donatedamount))
                     file.write(" ")
-                    file.write(worker.bonusamount)
+                    file.write(str(worker.bonusamount))
                     file.write(" ")
-                    file.write(worker.verified)
+                    file.write(str(int(worker.verified)))
                     file.write("\n")
 
 try:
