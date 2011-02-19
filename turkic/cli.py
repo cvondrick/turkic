@@ -13,6 +13,11 @@ from turkic.models import *
 from turkic.database import session
 from sqlalchemy import func
 
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
+
 handlers = {}
 
 def handler(help = "", inname = None):
@@ -420,37 +425,31 @@ class workers(Command):
 
     def __call__(self, args):
         if args.load:
-            with open(args.load) as file:
-                    data = line.split(" ")
-                    worker = Worker.lookup(data[0])
-                    worker.numsubmitted = int(data[1])
-                    worker.numacceptances = int(data[2])
-                    worker.numrejections = int(data[3])
-                    worker.blocked = bool(data[4])
-                    worker.donatedamount = float(data[5])
-                    worker.bonusamount = float(data[6])
-                    worker.verified = float(data[7])
-                    session.add(worker)
+            for data in pickle.load(open(args.load)):
+                worker = Worker.lookup(data[0])
+                worker.numsubmitted = data[1]
+                worker.numacceptances = data[2]
+                worker.numrejections = data[3]
+                worker.blocked = data[4]
+                worker.donatedamount = data[5]
+                worker.bonusamount = data[6]
+                worker.verified = data[7]
+                print "Loaded {0}".format(worker.id)
+                session.add(worker)
             session.commit()
         elif args.dump:
-            with open(args.dump, "w") as file:
-                for worker in session.query(Worker):
-                    file.write(worker.id)
-                    file.write(" ")
-                    file.write(str(worker.numsubmitted))
-                    file.write(" ")
-                    file.write(str(worker.numacceptances))
-                    file.write(" ")
-                    file.write(str(worker.numrejections))
-                    file.write(" ")
-                    file.write(str(worker.blocked))
-                    file.write(" ")
-                    file.write(str(worker.donatedamount))
-                    file.write(" ")
-                    file.write(str(worker.bonusamount))
-                    file.write(" ")
-                    file.write(str(int(worker.verified)))
-                    file.write("\n")
+            data = []
+            for worker in session.query(Worker):
+                data.append((worker.id,
+                             worker.numsubmitted,
+                             worker.numacceptances,
+                             worker.numrejections,
+                             worker.blocked,
+                             worker.donatedamount,
+                             worker.bonusamount,
+                             worker.verified))
+                print "Dumped {0}".format(worker.id)
+            pickle.dump(data, open(args.dump, "w"))
 
 try:
     import config
