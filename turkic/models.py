@@ -203,7 +203,7 @@ class HIT(database.Base):
             logger.debug("Awarding bonus of {0} on HIT {1}"
                          .format(amount, self.hitid))
             self.bonusamount += amount
-            self.worker.donatedamount += amount
+            self.worker.bonusamount += amount
             if not reason:
                 if bs:
                     reason = random.choice(reasons)
