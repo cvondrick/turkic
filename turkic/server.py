@@ -61,7 +61,6 @@ def application(environ, start_response):
         handler, type, jsonify, post, passenviron = handlers[action]
     except KeyError:
         start_response("200 OK", [("Content-Type", "text/plain")])
-        return action + " in " + ",".join(handlers)
         return ["Error 404\n", "Action {0} undefined.".format(action)]
 
     try:
