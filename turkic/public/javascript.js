@@ -371,4 +371,5 @@ if (!console)
 {
     var console = new Object();
     console.log = function() {};
+    console.dir = function() {};
 }
