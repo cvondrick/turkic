@@ -411,6 +411,47 @@ class setup(Command):
         if args.database:
             self.database(args)
 
+class workers(Command):
+    def setup(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--load")
+        parser.add_argument("--dump")
+
+    def __call__(self, args):
+        if args.dump:
+            with open(args.dump) as file:
+                for line in file:
+                    data = line.split(" ")
+                    worker = Worker.lookup(data[0])
+                    worker.numsubmitted = int(data[1])
+                    worker.numacceptances = int(data[2])
+                    worker.numrejections = int(data[3])
+                    worker.blocked = bool(data[4])
+                    worker.donatedamount = float(data[5])
+                    worker.bonusamount = float(data[6])
+                    worker.verified = float(data[7])
+                    session.add(worker)
+            session.commit()
+        elif args.load:
+            with open(args.load, "w") as file:
+                for worker in session.query(Worker):
+                    file.write(worker.id)
+                    file.write(" ")
+                    file.write(worker.numsubmitted)
+                    file.write(" ")
+                    file.write(worker.numacceptances)
+                    file.write(" ")
+                    file.write(worker.numrejections)
+                    file.write(" ")
+                    file.write(worker.blocked)
+                    file.write(" ")
+                    file.write(worker.donatedamount)
+                    file.write(" ")
+                    file.write(worker.bonusamount)
+                    file.write(" ")
+                    file.write(worker.verified)
+                    file.write("\n")
+
 try:
     import config
 except ImportError:
@@ -421,3 +462,4 @@ else:
     handler("Pay workers")(compensate)
     handler("Setup the application")(setup)
     handler("Report status on donations")(donation)
+    handler("Manage the workers")(workers)
