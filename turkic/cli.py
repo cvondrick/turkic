@@ -29,7 +29,7 @@ def handler(help = "", inname = None):
     """
     def decorator(func):
         if inname is None:
-            name = func.__name__
+            name = func.__name__.replace("_", "-")
         else:
             name = inname
         handlers[name.lower()] = func, help
