@@ -450,7 +450,17 @@ class workers(Command):
                              worker.verified))
                 print "Dumped {0}".format(worker.id)
             pickle.dump(data, open(args.dump, "w"))
-
+        else:
+            for worker in session.query(Worker):
+                data = (worker.id,
+                        worker.numsubmitted,
+                        worker.numacceptances,
+                        worker.numrejections,
+                        worker.blocked,
+                        worker.donatedamount,
+                        worker.bonusamount,
+                        worker.verified)
+                print "{0}: {1} jobs ({2} acc, {3} rej)".format(*data)
 try:
     import config
 except ImportError:
