@@ -451,7 +451,9 @@ class workers(Command):
                 print "Dumped {0}".format(worker.id)
             pickle.dump(data, open(args.dump, "w"))
         else:
-            for worker in session.query(Worker):
+            workers = session.query(Worker)
+            workers = workers.order_by(Worker.numacceptances)
+            for worker in workers:
                 data = (worker.id,
                         worker.numsubmitted,
                         worker.numacceptances,
