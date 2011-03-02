@@ -214,6 +214,9 @@ class HIT(database.Base):
     def offlineurl(self, localhost):
         return "{0}{1}&hitId=offline".format(localhost, self.getpage())
 
+    def invalidate(self):
+        raise NotImplementedError("Subclass must implement 'invalid()'")
+
 class BonusSchedule(database.Base):
     __tablename__ = "turkic_bonus_schedules"
 
