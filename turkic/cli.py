@@ -423,6 +423,8 @@ class invalidate(Command):
         parser.add_argument("--hit", action = "store_true", default = False)
         parser.add_argument("--no-block", action = "store_true",
                             default = False)
+        parser.add_argument("--no-publish", action = "store_true",
+                            default = False)
         return parser
 
     def __call__(self, args):
@@ -449,10 +451,11 @@ class invalidate(Command):
 
             if replacement:
                 session.add(replacement)
-                session.commit()
-                replacement.publish()
-                session.add(replacement)
-                print "Respawned replacement to {0}".format(replacement.hitid)
+                if not args.no_publish:
+                    session.commit()
+                    replacement.publish()
+                    session.add(replacement)
+                    print "Respawned with {0}".format(replacement.hitid)
         session.commit()
 
 class workers(Command):
