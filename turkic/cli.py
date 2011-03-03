@@ -416,11 +416,53 @@ class setup(Command):
         if args.database:
             self.database(args)
 
+class invalidate(Command):
+    def setup(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument("id")
+        parser.add_argument("--hit", action = "store_true", default = False)
+        parser.add_argument("--no-block", action = "store_true",
+                            default = False)
+        return parser
+
+    def __call__(self, args):
+        query = session.query(HIT)
+        query = query.filter(HIT.useful == True)
+        if args.hit:
+            query = query.filter(HIT.hitid == args.id)
+        else:
+            worker = session.query(Worker).get(args.id)
+            if not worker:
+                print "Worker \"{0}\" not found".format(args.id)
+                return
+            if not args.no_block:
+                worker.block("HIT was invalid.")
+                print "Blocked worker \"{0}\"".format(args.id)
+                session.add(worker)
+
+            query = query.filter(HIT.workerid == args.id)
+
+        for hit in query:
+            replacement = hit.invalidate() 
+            session.add(hit)
+            print "Invalidated {0}".format(hit.hitid)
+
+            if replacement:
+                session.add(replacement)
+                session.commit()
+                replacement.publish()
+                session.add(replacement)
+                print "Respawned replacement to {0}".format(replacement.hitid)
+        session.commit()
+
 class workers(Command):
     def setup(self):
         parser = argparse.ArgumentParser()
         parser.add_argument("--load")
         parser.add_argument("--dump")
+        parser.add_argument("--block")
+        parser.add_argument("--unblock")
+        parser.add_argument("--search")
         return parser
 
     def __call__(self, args):
@@ -450,6 +492,27 @@ class workers(Command):
                              worker.verified))
                 print "Dumped {0}".format(worker.id)
             pickle.dump(data, open(args.dump, "w"))
+        elif args.block:
+            worker = Worker.lookup(args.block)
+            worker.block("Poor quality work.")
+            session.add(worker)
+            session.commit()
+            print "Blocked {0}".format(args.block)
+        elif args.unblock:
+            worker = Worker.lookup(args.unblock)
+            worker.unblock("Continue working.")
+            session.add(worker)
+            session.commit()
+            print "Unblocked {0}".format(args.unblock)
+        elif args.search:
+            query = session.query(Worker)
+            query = query.filter(Worker.id.like(args.search + "%"))
+            if query.count():
+                print "Matches:"
+                for worker in query:
+                    print worker.id
+            else:
+                print "No matches."
         else:
             workers = session.query(Worker)
             workers = workers.order_by(Worker.numacceptances)
@@ -474,3 +537,4 @@ else:
     handler("Setup the application")(setup)
     handler("Report status on donations")(donation)
     handler("Manage the workers")(workers)
+    handler("Invalidates and rewspawn tasks")(invalidate)

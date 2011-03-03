@@ -60,6 +60,23 @@ function mturk_parameters()
     return retval;
 }
 
+function mturk_ready(callback)
+{
+    console.log("Waiting to be ready");
+    if (mturk_isassigned())
+    {
+        server_jobstats(function() {
+            console.log("Ok, ready");
+            callback();
+        });
+    }
+    else
+    {
+        console.log("Ok, ready, but no stats");
+        callback();
+    }
+}
+
 function mturk_isassigned()
 {
     var params = mturk_parameters();
@@ -147,6 +164,8 @@ function mturk_showoffline()
 
 function mturk_showstatistics()
 {
+    console.log("Showing statistics");
+
     var stc = $('<div id="turkic_workerstats"><div id="turkic_workerstatscontent"></div></div>');
     st = stc.children("#turkic_workerstatscontent");
 
@@ -204,6 +223,29 @@ function mturk_showstatistics()
             mturk_showdonate(amount);
         }
     });
+}
+
+function mturk_blockbadworkers(callback)
+{
+    if (mturk_isassigned())
+    {
+        console.log("Checking if worker is blocked...");
+        server_jobstats(function(data) {
+            if (data["blocked"])
+            {
+                console.log("Worker is bad");
+                death("You are blocked.");
+            }
+            else
+            {
+                callback();
+            }
+        });
+    }
+    else
+    {
+        callback();
+    }
 }
 
 function mturk_showdonate(reward)
@@ -341,6 +383,7 @@ function server_jobstats(callback)
 {
     if (server_jobstats_data == null)
     {
+        console.log("Querying for job stats");
         var params = mturk_parameters();
         if (params.workerid)
         {
@@ -364,6 +407,7 @@ function server_jobstats(callback)
 
 function death(message)
 {
+    console.log(message);
     document.write("<style>body{background-color:#333;color:#fff;text-align:center;padding-top:100px;font-weight:bold;font-size:30px;font-family:Arial;</style>" + message);
 }
 

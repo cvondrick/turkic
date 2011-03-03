@@ -127,12 +127,14 @@ def getjobstats(hitid, workerid):
         status["numrejected"] = 0
         status["numsubmitted"] = 0
         status["verified"] = False
+        status["blocked"] = False
     else:
         status["newuser"] = False
         status["numaccepted"] = worker.numacceptances
         status["numrejected"] = worker.numrejections
         status["numsubmitted"] = worker.numsubmitted
         status["verified"] = worker.verified
+        status["blocked"] = worker.blocked
     return status
 
 def savejobstats(hitid, timeaccepted, timecompleted, donate, environ):

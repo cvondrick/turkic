@@ -95,6 +95,7 @@ class HIT(database.Base):
     opt2donate    = Column(Boolean, default = False)
     donatedamount = Column(Float, nullable = False, default = 0.0)
     bonusamount   = Column(Float, nullable = False, default = 0.0)
+    useful        = Column(Boolean, default = True)
 
     discriminator = Column("type", String(250))
     __mapper_args__ = {"polymorphic_on": discriminator,
