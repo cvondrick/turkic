@@ -333,44 +333,11 @@ class compensate(Command):
             session.commit()
             session.close()
 
-#class donation(Command):
-#    def __call__(self, args):
-#        session = database.connect()
-#        try:
-#            donateyes = session.query(HIT)
-#            donateyes = donateyes.filter(HIT.opt2donate == True)
-#            donateyes = donateyes.filter(HIT.completed == True)
-#            donateyes = donateyes.count()
-#
-#            donateno = session.query(HIT)
-#            donateno = donateno.filter(HIT.opt2donate == False)
-#            donateno = donateno.filter(HIT.completed == True)
-#            donateno = donateno.count()
-#
-#            completed = donateyes + donateno
-#            if completed > 0:
-#                percentyes = donateyes / float(completed) * 100
-#                percentno = donateno / float(completed) * 100
-#
-#                donateamount = session.query(func.sum(HIT.donatedamount))
-#                donateamount = donateamount.filter(HIT.completed == True)
-#                donateamount = donateamount.one()[0]
-#
-#                if not donateamount:
-#                    donateamount = 0
-#            else:
-#                percentyes = 0
-#                percentno = 0
-#                donateamount = 0
-#
-#            print "{0:>5} total HITs completed".format(completed)
-#            print ("{0:>5} times the worker elected for a donation ({1:.0f}%)"
-#                .format(donateyes, percentyes))
-#            print ("{0:>5} times the worker elected for a bonus    ({1:.0f}%)"
-#                .format(donateno, percentno))
-#            print "${0:>4.2f} total amount donated".format(donateamount)
-#        finally:
-#            session.close()
+class donation(Command):
+    def __call__(self, args):
+        hits = session.query(HIT).filter(HIT.donatedamount > 0)
+        for hit in hits:
+            print hit.workerid, hit.timeonserver, hit.donatedamount
 
 class setup(Command):
     def setup(self):
@@ -538,6 +505,6 @@ else:
     handler("Launch work")(publish)
     handler("Pay workers")(compensate)
     handler("Setup the application")(setup)
-    #handler("Report status on donations")(donation)
+    handler("Report status on donations")(donation)
     handler("Manage the workers")(workers)
     handler("Invalidates and rewspawn tasks")(invalidate)

@@ -166,9 +166,7 @@ class HIT(database.Base):
         if self.donatedamount > 0:
             reason = (reason + " For this HIT, we have donated ${0:>4.2f} to "
             "the World Food Programme on your behalf. Thank you for your "
-            "support! See how you rank compared to other workers here: "
-            "http://deepthought.ics.uci.edu/~cvondrick/donation/#w{1}".
-            format(self.donatedamount, self.workerid))
+            "support!".format(self.donatedamount))
 
         api.server.accept(self.assignmentid, reason)
         self.accepted = True

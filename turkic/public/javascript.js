@@ -245,9 +245,6 @@ function mturk_blockbadworkers(callback)
 
 function mturk_showdonate(callback)
 {
-    console.log("Show donation")
-    
-    var overlay = $('<div id="turkic_overlay"></div>').appendTo("body");
 
     var str = "<h1>Help us end world hunger.</h1>" +
               "<p>We are offering you the chance to work on behalf of " +
@@ -277,18 +274,30 @@ function mturk_showdonate(callback)
 
     str += "<p>See which other workers are donating and where you rank on our <a href='http://deepthought.ics.uci.edu/~cvondrick/donation/' target='_blank'>status page</a>.</p>";
 
-    var donation = $('<div id="turkic_donation"></div>').appendTo("body");
-    donation.append(str);
 
-    $("#turkic_donate_close").click(function() {
-        var amount = $("input[name=donateamt]:checked").val();
-        var params = mturk_parameters();
-        server_request("turkic_savedonationstatus", [params.hitid, amount],
-                        function() {
-                            overlay.remove();
-                            donation.remove();
-                            callback();
-                        });
+    server_jobstats(function(data) {
+        if (data["donationcode"] == 0 || data["bonuses"].length == 0)
+        {
+            callback();
+            return;
+        }
+
+        console.log("Show donation")
+        var overlay = $('<div id="turkic_overlay"></div>').appendTo("body");
+
+        var donation = $('<div id="turkic_donation"></div>').appendTo("body");
+        donation.append(str);
+
+        $("#turkic_donate_close").click(function() {
+            var amount = $("input[name=donateamt]:checked").val();
+            var params = mturk_parameters();
+            server_request("turkic_savedonationstatus", [params.hitid, amount],
+                            function() {
+                                overlay.remove();
+                                donation.remove();
+                                callback();
+                            });
+        });
     });
 }
 
