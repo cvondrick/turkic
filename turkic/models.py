@@ -92,7 +92,7 @@ class HIT(database.Base):
     timeonserver  = Column(DateTime)
     ipaddress     = Column(String(15))
     page          = Column(String(250), nullable = False, default = "")
-    opt2donate    = Column(Boolean, default = False)
+    opt2donate    = Column(Float, default = 0)
     donatedamount = Column(Float, nullable = False, default = 0.0)
     bonusamount   = Column(Float, nullable = False, default = 0.0)
     useful        = Column(Boolean, default = True)
@@ -166,7 +166,9 @@ class HIT(database.Base):
         if self.donatedamount > 0:
             reason = (reason + " For this HIT, we have donated ${0:>4.2f} to "
             "the World Food Programme on your behalf. Thank you for your "
-            "support!".format(self.donatedamount))
+            "support! See how you rank compared to other workers here: "
+            "http://deepthought.ics.uci.edu/~cvondrick/donation/#w{1}".
+            format(self.donatedamount, self.workerid))
 
         api.server.accept(self.assignmentid, reason)
         self.accepted = True
@@ -195,16 +197,16 @@ class HIT(database.Base):
         logger.debug("Rejected work for HIT {0}".format(self.hitid))
     
     def awardbonus(self, amount, reason = None, bs = True):
-        if self.opt2donate:
-            logger.debug("Awarding bonus of {0} on HIT {1}, but worker opted "
-                         "to donate".format(amount, self.hitid))
-            self.donatedamount += amount
-            self.worker.donatedamount += amount
-        else:
+        self.donatedamount += amount * self.opt2donate
+        self.worker.donatedamount += amount * self.opt2donate
+
+        amount = round(amount * (1 - self.opt2donate), 2)
+
+        if amount > 0:
             logger.debug("Awarding bonus of {0} on HIT {1}"
-                         .format(amount, self.hitid))
-            self.bonusamount += amount
-            self.worker.bonusamount += amount
+                            .format(amount, self.hitid))
+            self.bonusamount += amount 
+            self.worker.bonusamount += amount 
             if not reason:
                 if bs:
                     reason = random.choice(reasons)

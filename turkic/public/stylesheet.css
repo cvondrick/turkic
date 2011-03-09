@@ -59,7 +59,6 @@
 #turkic_donation
 {
     width : 650px;
-    height : 400px;
     position : fixed;
     top : 50px;
     left : 50%;
@@ -107,9 +106,7 @@
 
 #turkic_donate_close
 {
-    font-weight : bold;
-    font-size : 16px;
-    padding : 5px 20px;
+    font-size : 14px;
 }
 
 #turkic_donation_question

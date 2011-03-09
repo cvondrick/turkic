@@ -137,7 +137,7 @@ def getjobstats(hitid, workerid):
         status["blocked"] = worker.blocked
     return status
 
-def savejobstats(hitid, timeaccepted, timecompleted, donate, environ):
+def savejobstats(hitid, timeaccepted, timecompleted, environ):
     """
     Saves statistics for a job.
     """
@@ -146,10 +146,20 @@ def savejobstats(hitid, timeaccepted, timecompleted, donate, environ):
     hit.timeaccepted = datetime.fromtimestamp(int(timeaccepted) / 1000)
     hit.timecompleted = datetime.fromtimestamp(int(timecompleted) / 1000)
     hit.timeonserver = datetime.now()
-    hit.opt2donate = donate
 
     hit.ipaddress = environ.get("HTTP_X_FORWARDED_FOR", None)
     hit.ipaddress = environ.get("REMOTE_ADDR", hit.ipaddress)
+
+    session.add(hit)
+    session.commit()
+
+def savedonationstatus(hitid, donation):
+    """
+    Saves the donation statistics
+    """
+    hit = session.query(models.HIT).filter(models.HIT.hitid == hitid).one()
+    hit.opt2donate = float(donation)
+    hit.opt2donate = min(max(hit.opt2donate, 0), 1)
 
     session.add(hit)
     session.commit()
@@ -170,3 +180,5 @@ handlers["turkic_savejobstats"] = \
     (savejobstats, "text/json", True, False, True)
 handlers["turkic_markcomplete"] = \
     (markcomplete, "text/json", True, False, False)
+handlers["turkic_savedonationstatus"] = \
+    (savedonationstatus, "text/json", True, False, False)

@@ -25,6 +25,9 @@ class Location(object):
         self.timezone = timezone
         self.ip = ip
 
+    def __repr__(self):
+        return "{0}, {1} {2}".format(self.city, self.region, self.country)
+
 cache = {}
 
 def lookup(ip):
