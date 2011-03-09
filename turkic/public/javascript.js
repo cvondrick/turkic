@@ -245,18 +245,22 @@ function mturk_blockbadworkers(callback)
 
 function mturk_showdonate(callback)
 {
-
-    var str = "<h1>Help us end world hunger.</h1>" +
-              "<p>We are offering you the chance to work on behalf of " +
-              "the United Nation's World Food Programme. When your HIT is " +
-              "accepted, we will pay you both your standard compensation as " +
-              "well as a bonus. If you choose, we can donate part of your " +
-              "bonus to charity instead.</p>" +
-              "<p>If every worker donates, we can collectively donate " +
-              "hundreds of thousands of dollars. 25&cent; will feed a " +
-              "hungry schoolchild enough nutritious food for a day. $50 can " +
-              "feed a child for an entire year. Your work can have an " +
-              "impact &mdash; all you must do is donate.</p>";
+    var str = '<a title="Help end child hunger" href="https://www.wfp.org/' +
+              'donate/fillthecup?utm_medium=banner&utm_campaign=bb-fillthe' + 
+              'cup125x125" target="_blank"><img width="125" height="125" a' +
+              'lt="Help end child hunger" src="http://www.wfp.org/sites/de' +
+              'fault/files/125x125_fill_the_cup.jpg" align="right" /></a>';
+    str += "<h1>Help us end world hunger.</h1>" +
+           "<p>We are offering you the chance to work on behalf of " +
+           "the United Nation's World Food Programme. When your HIT is " +
+           "accepted, we will pay you both your standard compensation as " +
+           "well as a bonus. If you choose, we can donate part of your " +
+           "bonus to charity instead.</p>" +
+           "<p>If every worker donates, we can collectively donate " +
+           "hundreds of thousands of dollars. 25&cent; will feed a " +
+           "hungry schoolchild enough nutritious food for a day. $50 can " +
+           "feed a child for an entire year. Your work can have an " +
+           "impact &mdash; all you must do is donate.</p>";
 
     str += "<p style='margin-left:30px;'>";
     str += "<strong>How much do you wish to donate?</strong><br>";
