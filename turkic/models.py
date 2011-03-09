@@ -5,6 +5,7 @@ from sqlalchemy.orm import relationship, backref
 import database
 import random
 import logging
+import math
 
 logger = logging.getLogger("turkic.models")
 
@@ -198,7 +199,7 @@ class HIT(database.Base):
         self.donatedamount += amount * self.opt2donate
         self.worker.donatedamount += amount * self.opt2donate
 
-        amount = round(amount * (1 - self.opt2donate), 2)
+        amount = math.floor(amount * (1 - self.opt2donate) * 100) / 100
 
         if amount > 0:
             logger.debug("Awarding bonus of {0} on HIT {1}"
