@@ -275,6 +275,7 @@ class compensate(Command):
         parser.add_argument("--validated", action = "store_true")
         parser.add_argument("--default", default="defer",
             choices=["accept", "reject", "defer", "warn"])
+        parser.add_argument("--limit", type=int, default = None)
         return parser
 
     def process(self, hit, acceptkeys, rejectkeys, warnkeys, validated, default):
@@ -316,6 +317,9 @@ class compensate(Command):
             query = query.filter(HIT.compensated == False)
             query = query.join(HITGroup)
             query = query.filter(HITGroup.offline == False)
+
+            if args.limit:
+                query = query.limit(args.limit)
 
             for hit in query:
                 try:
