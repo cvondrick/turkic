@@ -437,6 +437,7 @@ class workers(Command):
         parser.add_argument("--block")
         parser.add_argument("--unblock")
         parser.add_argument("--search")
+        parser.add_argument("--summary")
         return parser
 
     def __call__(self, args):
@@ -485,6 +486,18 @@ class workers(Command):
                 print "Matches:"
                 for worker in query:
                     print worker.id
+            else:
+                print "No matches."
+        elif args.summary:
+            query = session.query(Worker)
+            query = session.filter(Worker.id == args.summary)
+            if query.count():
+                worker = query.one()
+                print "Submitted: {0}".format(worker.numsubmitted)
+                print "Accepted: {0}".format(worker.numacceptances)
+                print "Rejected: {0}".format(worker.numrejections)
+                print "Bonuses: {0}".format(worker.bonusamount)
+                print "Donated: {0}".format(worker.donatedamount)
             else:
                 print "No matches."
         else:
