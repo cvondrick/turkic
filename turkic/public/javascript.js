@@ -333,8 +333,9 @@ function worker_isverified(iftrue, iffalse)
 var turkic_event_log = [];
 function eventlog(domain, message)
 {
-    turkic_event_log.push([(new Date()).getTime(), domain, message]);
-    console.log(domain + ": " + message);
+    var timestamp = (new Date()).getTime();
+    turkic_event_log.push([timestamp, domain, message]);
+    console.log(timestamp + " " + domain + ": " + message);
 }
 
 function eventlog_save(callback)
