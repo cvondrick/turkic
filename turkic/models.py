@@ -222,12 +222,12 @@ class HIT(database.Base):
 class EventLog(database.Base):
     __tablename__ = "turkic_event_log"
 
-    id      = Column(Integer, primary_key = True)
-    hitid   = Column(Integer, ForeignKey(HIT.id), index = True)
-    hit     = relationship(HIT, cascade = "all", backref = "hits")
-    domain  = Column(Text)
-    message = Column(Text)
-    time    = Column(DateTime)
+    id        = Column(Integer, primary_key = True)
+    hitid     = Column(Integer, ForeignKey(HIT.id), index = True)
+    hit       = relationship(HIT, cascade = "all", backref = "hits")
+    domain    = Column(Text)
+    message   = Column(Text)
+    timestamp = Column(DateTime)
 
 class BonusSchedule(database.Base):
     __tablename__ = "turkic_bonus_schedules"

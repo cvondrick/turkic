@@ -182,8 +182,9 @@ def saveeventlog(hitid, events):
     hit = session.query(models.HIT).filter(models.HIT.hitid == hitid).one()
 
     for timestamp, domain, message in events:
-        event = EventLog(hit = hit, domain = domain,
-                         message = message, timestamp = timestamp)
+        timestamp = datetime.fromtimestamp(int(timestamp) / 1000)
+        event = EventLog(hit = hit, domain = domain, message = message,
+                         timestamp = timestamp)
         session.add(event)
     session.commit()
 
@@ -196,4 +197,4 @@ handlers["turkic_markcomplete"] = \
 handlers["turkic_savedonationstatus"] = \
     (savedonationstatus, "text/json", True, False, False)
 handlers["turkic_saveeventlog"] = \
-    (savedonationstatus, "text/json", True, "json", False)
+    (saveeventlog, "text/json", True, "json", False)
