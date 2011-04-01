@@ -122,7 +122,9 @@ function mturk_submit(callback)
             [params.hitid, turkic_timeaccepted, now], 
             function() {
                 mturk_showdonate(function() {
-                    $("#turkic_mturk").submit();
+                    eventlog_save(function() {
+                        $("#turkic_mturk").submit();
+                    });
                 });
             });
     }
@@ -324,6 +326,37 @@ function worker_isverified(iftrue, iffalse)
     {
         // not accepted, so assume verified to create illusion
         iftrue();
+    }
+}
+
+
+var turkic_event_log = [];
+function eventlog(domain, message)
+{
+    turkic_event_log.push([(new Date()).getTime(), domain, message]);
+    console.log(domain + ": " + message);
+}
+
+function eventlog_save(callback)
+{
+    if (mturk_submitallowed())
+    {
+        var params = mturk_parameters();
+        var data = "[";
+        for (var i in turkic_event_log)
+        {
+            data += "[" + turkic_event_log[i][0] + ",";
+            data += turkic_event_log[i][1] + ",";
+            data += turkic_event_log[i][2] + "],";
+        }
+        data += "]";
+        server_post("turkic_saveeventlog", [params.hitid], data, function() {
+            callback();
+        });
+    }
+    else
+    {
+        callback();
     }
 }
 

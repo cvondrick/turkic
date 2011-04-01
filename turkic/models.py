@@ -219,6 +219,16 @@ class HIT(database.Base):
     def invalidate(self):
         raise NotImplementedError("Subclass must implement 'invalid()'")
 
+class EventLog(database.Base):
+    __tablename__ = "turkic_event_log"
+
+    id      = Column(Integer, primary_key = True)
+    hitid   = Column(Integer, ForeignKey(HIT.id), index = True)
+    hit     = relationship(HIT, cascade = "all", backref = "hits")
+    domain  = Column(Text)
+    message = Column(Text)
+    time    = Column(DateTime)
+
 class BonusSchedule(database.Base):
     __tablename__ = "turkic_bonus_schedules"
 

@@ -13,6 +13,7 @@ the 'handler' decorator. Example:
 
 import json
 from turkic.database import session
+from turkic.models import EventLog
 
 handlers = {}
 
@@ -174,6 +175,18 @@ def markcomplete(hitid, assignmentid, workerid):
     session.add(hit)
     session.commit()
 
+def saveeventlog(hitid, events):
+    """
+    Records the event log to database.
+    """
+    hit = session.query(models.HIT).filter(models.HIT.hitid == hitid).one()
+
+    for timestamp, domain, message in events:
+        event = EventLog(hit = hit, domain = domain,
+                         message = message, timestamp = timestamp)
+        session.add(event)
+    session.commit()
+
 handlers["turkic_getjobstats"] = \
     (getjobstats, "text/json", True, False, False)
 handlers["turkic_savejobstats"] = \
@@ -182,3 +195,5 @@ handlers["turkic_markcomplete"] = \
     (markcomplete, "text/json", True, False, False)
 handlers["turkic_savedonationstatus"] = \
     (savedonationstatus, "text/json", True, False, False)
+handlers["turkic_saveeventlog"] = \
+    (savedonationstatus, "text/json", True, "json", False)
