@@ -8,6 +8,7 @@ with 'turkic [command] [arguments]' from the shell.
 import sys
 import database
 import argparse
+import urllib2
 from turkic.api import CommunicationError
 from turkic.models import *
 from turkic.database import session
@@ -168,6 +169,7 @@ class status(Command):
     def setup(self):
         parser = argparse.ArgumentParser()
         parser.add_argument("--turk", action = "store_true")
+        parser.add_argument("--verify", action = "store_true")
         return parser
 
     def serverconfig(self, session):
@@ -208,14 +210,39 @@ class status(Command):
                 print "Server is offline."
             else:
                 print "Server is offline, but some workers are not compensated."
-        
+
+    def verify(self, session):
+        print "Testing access to Amazon Mechanical Turk...",
+        balance = api.server.balance
+        print "OK"
+
+        print "Testing access to database server...",
+        count = session.query(HIT).count()
+        print "OK"
+
+        print "Testing access to web server...",
+        da = urllib2.urlopen("{0}/turkic/verify.html".format(config.localhost))
+        da = da.read().strip()
+        if da == "1":
+            print "OK"
+        else:
+            print "ERROR!"
+            print "GOT RESPONSE, BUT INVALID"
+            print da
+
+        print ""
+        print "All tests passed!"
+
     def __call__(self, args):
         session = database.connect()
         try:
             self.serverconfig(session)
-            if args.turk:
-                self.turkstatus(session)
-            self.serverstatus(session)
+            if args.verify:
+                self.verify(session)
+            else:
+                if args.turk:
+                    self.turkstatus(session)
+                self.serverstatus(session)
         finally:
             session.close()
 
