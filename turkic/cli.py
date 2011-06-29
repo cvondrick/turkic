@@ -9,6 +9,7 @@ import sys
 import database
 import argparse
 import urllib2
+import os
 from turkic.api import CommunicationError
 from turkic.models import *
 from turkic.database import session
@@ -375,6 +376,7 @@ class setup(Command):
         parser = argparse.ArgumentParser()
         parser.add_argument("--database", action="store_true")
         parser.add_argument("--reset", action="store_true")
+        parser.add_argument("--public-symlink", action="store_true")
         parser.add_argument("--no-confirm", action="store_true")
         return parser
 
@@ -411,6 +413,16 @@ class setup(Command):
             print "Installed new tables, if any."
 
     def __call__(self, args):
+        if args.public_symlink:
+            target = os.getcwd() + "/public/turkic"
+            public = os.path.dirname(__file__) + "/public"
+            try:
+                os.symlink(public, target)
+            except OSError:
+                print "Could not create symlink!"
+            else:
+                print "Created symblink {0} to {1}".format(public, target)
+                
         if args.database:
             self.database(args)
 
