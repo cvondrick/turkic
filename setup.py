@@ -17,12 +17,12 @@ setup(
     author_email = "cvondric@ics.uci.edu",
     description = "A framework for Mechanical Turk HITs",
     license = "MIT",
-    version = "0.2.0",
+    version = "0.2.1",
     classifiers = ['Development Status :: 1 - Planning',
                    'Intended Audience :: Developers'],
     packages = ["turkic"],
     scripts = ['scripts/turkic'],
     package_dir = {"turkic": "turkic"},
     package_data = {"": datafiles},
-    install_requires = ["setuptools", "SQLAlchemy", "wsgilog"]
+    install_requires = ["setuptools", "SQLAlchemy", "wsgilog", "MySQL-python"]
 )
