@@ -5,7 +5,7 @@ import os
 def getfiles(root):
     for dirpath, _, filenames in os.walk(root):
         for filename in filenames:
-            yield os.path.realpath(os.path.join(dirpath, filename))
+            yield os.path.relpath(os.path.join(dirpath, filename))
 
 datafiles  = list(getfiles("turkic/skeleton"))
 datafiles += list(getfiles("turkic/public"))
