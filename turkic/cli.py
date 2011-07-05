@@ -213,26 +213,46 @@ class status(Command):
                 print "Server is offline, but some workers are not compensated."
 
     def verify(self, session):
+        passed = True
+
         print "Testing access to Amazon Mechanical Turk...",
-        balance = api.server.balance
-        print "OK"
+        try:
+            balance = api.server.balance
+        except Exception as e:
+            print "ERROR!", e
+            passed = False
+        else:
+            print "OK"
 
         print "Testing access to database server...",
-        count = session.query(HIT).count()
+        try:
+            count = session.query(HIT).count()
+        except Exception as e:
+            print "ERROR!", e
+            passed = False
         print "OK"
 
         print "Testing access to web server...",
-        da = urllib2.urlopen("{0}/turkic/verify.html".format(config.localhost))
-        da = da.read().strip()
-        if da == "1":
-            print "OK"
-        else:
-            print "ERROR!"
-            print "GOT RESPONSE, BUT INVALID"
-            print da
+        try:
+            da = urllib2.urlopen(
+                    "{0}/turkic/verify.html".format(config.localhost))
+            da = da.read().strip()
+            if da == "1":
+                print "OK"
+            else:
+                print "ERROR!",
+                print "GOT RESPONSE, BUT INVALID"
+                print da
+                passed = False
+        except Exception as e:
+            print "ERROR!", e
+            passed = False
 
         print ""
-        print "All tests passed!"
+        if passed:
+            print "All tests passed!"
+        else:
+            print "One or more tests FAILED!"
 
     def __call__(self, args):
         session = database.connect()
