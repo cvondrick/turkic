@@ -2,8 +2,8 @@ import base64
 import time
 import hashlib
 import hmac
-import httplib
 import urllib
+import urllib2
 from math import ceil
 from xml.etree import ElementTree
 
@@ -19,9 +19,9 @@ class Server(object):
         self.sandbox = sandbox
 
         if sandbox:
-            self.server = "mechanicalturk.sandbox.amazonaws.com:80"
+            self.server = "mechanicalturk.sandbox.amazonaws.com"
         else:
-            self.server = "mechanicalturk.amazonaws.com:80"
+            self.server = "mechanicalturk.amazonaws.com"
 
     def request(self, operation, parameters = {}):
         """
@@ -48,11 +48,12 @@ class Server(object):
                     "Signature": hmacstr,
                     "Timestamp": timestamp})
         url = baseurl + "&" + urllib.urlencode(parameters)
+        url = "https://" + self.server + url
 
-        conn = httplib.HTTPConnection(self.server)
-        conn.request("GET", url)
-        response = Response(operation, conn.getresponse())
-        conn.close()
+        req = urllib2.Request(url = url)
+        data = urllib2.urlopen(req)
+        
+        response = Response(operation, data)
         return response
 
     def createhit(self, title, description, page, amount, duration,
