@@ -10,6 +10,8 @@ import database
 import argparse
 import urllib2
 import os
+import shutil
+import glob
 from turkic.api import CommunicationError
 from turkic.models import *
 from turkic.database import session
@@ -133,7 +135,8 @@ def main(args = None):
             try:
                 handler(args[1:])
             finally:
-                session.remove()
+                if session:
+                    session.remove()
 
 def help(args = None):
     """

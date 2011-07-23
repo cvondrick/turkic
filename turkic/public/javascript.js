@@ -335,7 +335,7 @@ function eventlog(domain, message)
 {
     var timestamp = (new Date()).getTime();
     turkic_event_log.push([timestamp, domain, message]);
-    console.log(timestamp + " " + domain + ": " + message);
+    //console.log(timestamp + " " + domain + ": " + message);
 }
 
 function eventlog_save(callback)
