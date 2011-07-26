@@ -299,7 +299,7 @@ class publish(Command):
                         hitid = hit.disable()
                         print "Disabled {0}".format(hitid)
                     except Exception as e:
-                        print "Unable to disable HIT {0}!".format(hitid)
+                        print "Unable to disable HIT {0}!".format(hit.hitid)
                         print e
                     session.add(hit)
             else:
