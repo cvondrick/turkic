@@ -295,8 +295,12 @@ class publish(Command):
                     query = query.limit(args.limit)
 
                 for hit in query:
-                    hitid = hit.disable()
-                    print "Disabled {0}".format(hitid)
+                    try:
+                        hitid = hit.disable()
+                        print "Disabled {0}".format(hitid)
+                    except Exception as e:
+                        print "Unable to disable HIT {0}!".format(hitid)
+                        print e
                     session.add(hit)
             else:
                 query = query.filter(HIT.published == False)
