@@ -45,6 +45,24 @@
     float : right;
 }
 
+#turkic_timer
+{
+    float : right;
+}
+
+#turkic_timer input
+{
+    margin-top : -5px;
+    width : 100px;
+}
+
+#turkic_timer_value
+{
+    display : inline;
+    font-weight : bold;
+    margin-left : 20px;
+}
+
 #turkic_overlay
 {
     position : fixed;

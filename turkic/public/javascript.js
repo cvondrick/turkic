@@ -161,8 +161,49 @@ function mturk_showoffline()
 {
     var stc = $('<div id="turkic_workerstats"><div id="turkic_workerstatscontent"></div></div>');
     st = stc.children("#turkic_workerstatscontent");
-    st.append("Task is in <strong>offline</strong> mode. Mechanical Turk hooks are disabled.");
+
+    st.append(mturk_setuptimer());
+
+    st.append("Task is in <strong>offline</strong> mode.");
+
     stc.appendTo("body");
+}
+
+function mturk_setuptimer()
+{
+    var timer = $('<div id="turkic_timer"></div>');
+    var button = $('<input type="button" value="Start Timer" id="turkic_timer_button">').appendTo(timer);
+    var tvalue = $('<div id="turkic_timer_value">0m 00s</div>').appendTo(timer);
+
+    var interval = null;
+    var secondspassed = 0;
+
+    button.toggle(function() {
+        $(this).val("Stop Timer"); 
+
+        interval = window.setInterval(function() {
+            secondspassed++;
+
+            var m = Math.floor(secondspassed / 60);
+            var s = secondspassed % 60;
+
+            if ((s + "").length == 1)
+            {
+                s = "0" + s;
+            }
+
+            var str = m + "m " + s + "s";
+
+            tvalue.html(str);
+        }, 1000);
+    }, function() {
+        $(this).val("Start Timer"); 
+
+        window.clearInterval(interval);
+        interval = null;
+    });
+
+    return timer;
 }
 
 function mturk_showstatistics()
