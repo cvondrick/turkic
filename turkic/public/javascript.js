@@ -206,6 +206,16 @@ function mturk_setuptimer()
     return timer;
 }
 
+function mturk_disabletimer()
+{
+    $("#turkic_timer input").attr("disabled", "disabled");
+}
+
+function mturk_enabletimer()
+{
+    $("#turkic_timer input").attr("disabled", "");
+}
+
 function mturk_showstatistics()
 {
     console.log("Showing statistics");
