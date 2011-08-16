@@ -579,6 +579,38 @@ class workers(Command):
                         worker.bonusamount,
                         worker.verified)
                 print "{0}: {1} jobs ({2} acc, {3} rej)".format(*data)
+
+class email(Command):
+    def setup(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument("workerid")
+        parser.add_argument("subject")
+        parser.add_argument("message")
+        parser.add_argument("--no-confirm", action="store_true")
+        return parser
+
+    def __call__(self, args):
+        message = open(args.message).read()
+
+        print "To: {0}".format(args.workerid)
+        print "Subject: {0}".format(args.subject)
+        print ""
+        print message
+        print ""
+
+        if not args.no_confirm:
+            print ""
+            resp = raw_input("Send? ").lower()
+            if resp not in ["yes", "y"]:
+                print "Aborted!"
+                return
+
+        print "Sending..."
+
+        api.server.email(args.workerid, args.subject, message)
+
+        print "Message sent!"
+
 try:
     import config
 except ImportError:
@@ -591,3 +623,4 @@ else:
     handler("Report status on donations")(donation)
     handler("Manage the workers")(workers)
     handler("Invalidates and rewspawn tasks")(invalidate)
+    handler("Email a worker")(email)

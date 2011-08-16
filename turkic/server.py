@@ -115,7 +115,10 @@ def getjobstats(hitid, workerid):
 
     status["reward"] = hit.group.cost
     status["donationcode"] = hit.group.donation
-    status["bonuses"] = [x.description() for x in hit.group.schedules]
+
+    bonuses = [x.description() for x in hit.group.schedules]
+    bonuses = [x for x in bonuses if x]
+    status["bonuses"] = bonuses
     
     worker = session.query(models.Worker)
     worker = worker.filter(models.Worker.id == workerid)

@@ -395,12 +395,20 @@ function eventlog_save(callback)
     {
         var params = mturk_parameters();
         var data = "[";
+        var counter = 0;
         for (var i in turkic_event_log)
         {
             data += "[" + turkic_event_log[i][0] + ",";
             data += "\"" + turkic_event_log[i][1] + "\",";
             data += "\"" + turkic_event_log[i][2] + "\"],";
+            counter++;
         }
+        if (counter == 0)
+        {
+            callback();
+            return;
+        }
+
         data = data.substr(0, data.length - 1) + "]";
         console.log(data);
         server_post("turkic_saveeventlog", [params.hitid], data, function() {
