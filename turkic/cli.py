@@ -564,21 +564,26 @@ class workers(Command):
                 print "Rejected: {0}".format(worker.numrejections)
                 print "Bonuses: {0}".format(worker.bonusamount)
                 print "Donated: {0}".format(worker.donatedamount)
+                print "Verified: {0}".format(worker.verified)
+                print "Blocked: {0}".format(worker.blocked)
             else:
                 print "No matches."
         else:
             workers = session.query(Worker)
             workers = workers.order_by(Worker.numacceptances)
             for worker in workers:
+                extra = ""
+                if worker.blocked:
+                    extra = "BLOCKED"
+                if worker.verified:
+                    extra = extra + " VERIFIED"
+                extra = extra.strip()
                 data = (worker.id,
                         worker.numsubmitted,
                         worker.numacceptances,
                         worker.numrejections,
-                        worker.blocked,
-                        worker.donatedamount,
-                        worker.bonusamount,
-                        worker.verified)
-                print "{0}: {1} jobs ({2} acc, {3} rej)".format(*data)
+                        extra)
+                print "{0:<15} {1:>5} jobs {2:>5} acc {3:>5} rej     {4}".format(*data)
 
 class email(Command):
     def setup(self):
