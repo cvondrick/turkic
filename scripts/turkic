@@ -6,9 +6,10 @@ sys.path.append(cwd)
 
 try:
     import config
-    import cli
 except ImportError:
     pass
+else:
+    import cli
 
 import turkic.cli
 
