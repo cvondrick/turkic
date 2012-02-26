@@ -234,7 +234,7 @@ function mturk_showstatistics()
 
         for (var i in bonuses)
         {
-            rewardstr += ' + <div class="turkic_workerstatsnumber">' + (bonuses[i][0] * 100) + ' &cent;</div> ' + bonuses[i][1];
+            rewardstr += ' + <div class="turkic_workerstatsnumber">' + Math.round(bonuses[i][0] * 100) + ' &cent;</div> ' + bonuses[i][1];
         }
 
         reward.html('Reward: ' + rewardstr);
