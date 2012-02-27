@@ -556,7 +556,7 @@ class workers(Command):
                 print "No matches."
         elif args.summary:
             query = session.query(Worker)
-            query = session.filter(Worker.id == args.summary)
+            query = query.filter(Worker.id == args.summary)
             if query.count():
                 worker = query.one()
                 print "Submitted: {0}".format(worker.numsubmitted)
@@ -566,6 +566,7 @@ class workers(Command):
                 print "Donated: {0}".format(worker.donatedamount)
                 print "Verified: {0}".format(worker.verified)
                 print "Blocked: {0}".format(worker.blocked)
+                print "Locations: {0}".format(", ".join(set(x.country for x in worker.locations)))
             else:
                 print "No matches."
         else:
