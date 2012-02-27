@@ -6,6 +6,7 @@ import database
 import random
 import logging
 import math
+import turkic.geolocation
 
 logger = logging.getLogger("turkic.models")
 
@@ -73,6 +74,11 @@ class Worker(database.Base):
     @property
     def ips(self):
         return set(x.ipaddress for x in self.tasks)
+
+    @property
+    def locations(self):
+        locs = [turkic.geolocation.lookup(x) for x in self.ips]
+        return [x for x in locs if x]
 
 class HIT(database.Base):
     __tablename__ = "turkic_hits"
