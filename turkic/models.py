@@ -70,6 +70,10 @@ class Worker(database.Base):
             logger.debug("Created new worker {0}".format(workerid))
         return worker
 
+    @property
+    def ips(self):
+        return set(x.ipaddress for x in self.tasks)
+
 class HIT(database.Base):
     __tablename__ = "turkic_hits"
 

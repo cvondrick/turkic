@@ -16,6 +16,7 @@ from turkic.api import CommunicationError
 from turkic.models import *
 from turkic.database import session
 from sqlalchemy import func
+import turkic.geolocation
 
 try:
     import cPickle as pickle
@@ -575,8 +576,11 @@ class workers(Command):
                 extra = ""
                 if worker.blocked:
                     extra = "BLOCKED"
-                if worker.verified:
-                    extra = extra + " VERIFIED"
+                locs = [turkic.geolocation.lookup(x).country for x in worker.ips]
+                locs = [x for x in locs if x]
+                if locs:
+                    locs = ", ".join(locs)
+                    extra += " " + locs
                 extra = extra.strip()
                 data = (worker.id,
                         worker.numsubmitted,
