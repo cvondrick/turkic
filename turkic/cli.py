@@ -504,6 +504,7 @@ class workers(Command):
         parser.add_argument("--unblock")
         parser.add_argument("--search")
         parser.add_argument("--summary")
+        parser.add_argument("--location", action="store_true", default=False)
         return parser
 
     def __call__(self, args):
@@ -566,7 +567,8 @@ class workers(Command):
                 print "Donated: {0}".format(worker.donatedamount)
                 print "Verified: {0}".format(worker.verified)
                 print "Blocked: {0}".format(worker.blocked)
-                print "Locations: {0}".format(", ".join(set(x.country for x in worker.locations)))
+                if args.location:
+                    print "Locations: {0}".format(", ".join(set(x.country for x in worker.locations)))
             else:
                 print "No matches."
         else:
@@ -576,10 +578,11 @@ class workers(Command):
                 extra = ""
                 if worker.blocked:
                     extra = "BLOCKED"
-                locs = set(x.country for x in worker.locations)
-                if locs:
-                    locs = ", ".join(locs)
-                    extra += " " + locs
+                if args.location:
+                    locs = set(x.country for x in worker.locations)
+                    if locs:
+                        locs = ", ".join(locs)
+                        extra += " " + locs
                 extra = extra.strip()
                 data = (worker.id,
                         worker.numsubmitted,
