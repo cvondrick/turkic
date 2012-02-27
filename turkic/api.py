@@ -236,7 +236,9 @@ class Server(object):
         """
         Returns the total reward payout.
         """
-        return self.getstatistic("TotalRewardPayout", float)
+        reward = self.getstatistic("TotalRewardPayout", float)
+        bonus = self.getstatistic("TotalBonusPayout", float)
+        return reward + bonus
 
     @property
     def approvalpercentage(self):
