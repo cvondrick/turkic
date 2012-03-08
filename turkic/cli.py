@@ -377,6 +377,8 @@ class compensate(Command):
                 query = query.limit(args.limit)
 
             for hit in query:
+                if not hit.check():
+                    print "WARNING: {0} failed payment check, ignoring".format(hit.hitid)
                 try:
                     self.process(hit, acceptkeys, rejectkeys, warnkeys,
                         args.validated, args.default)
@@ -387,6 +389,8 @@ class compensate(Command):
                             print "Rejected HIT {0}".format(hit.hitid)
                         session.add(hit)
                 except CommunicationError as e:
+                    hit.compensated = True
+                    session.add(hit)
                     print "Error with HIT {0}: {1}".format(hit.hitid, e)
         finally:
             session.commit()

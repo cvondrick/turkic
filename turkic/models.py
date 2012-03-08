@@ -204,6 +204,9 @@ class HIT(database.Base):
         self.worker.numrejections += 1
 
         logger.debug("Rejected work for HIT {0}".format(self.hitid))
+
+    def check(self):
+        return True
     
     def awardbonus(self, amount, reason = None, bs = True):
         self.donatedamount += amount * self.opt2donate
