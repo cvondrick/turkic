@@ -379,6 +379,7 @@ class compensate(Command):
             for hit in query:
                 if not hit.check():
                     print "WARNING: {0} failed payment check, ignoring".format(hit.hitid)
+                    continue
                 try:
                     self.process(hit, acceptkeys, rejectkeys, warnkeys,
                         args.validated, args.default)
