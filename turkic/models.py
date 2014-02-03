@@ -198,7 +198,10 @@ class HIT(database.Base):
         logger.debug("Accepted, but warned for HIT {0}".format(self.hitid))
 
     def reject(self, reason = ""):
-        api.server.reject(self.assignmentid, reason)
+        try:
+          api.server.reject(self.assignmentid, reason)
+        except:
+          print "Failed to reject {0}".format(self.assignmentid)
         self.accepted = False
         self.compensated = True
         self.worker.numrejections += 1

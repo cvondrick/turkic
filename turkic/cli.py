@@ -62,6 +62,8 @@ class LoadCommand(object):
         lifetime = args.lifetime if args.lifetime else self.lifetime(args)
         duration = args.duration if args.duration else self.duration(args)
         keywords = args.keywords if args.keywords else self.keywords(args)
+        minapprovedamount = args.min_approved_amount if args.min_approved_amount else self.minapprovedamount(args)
+        minapprovedpercent = args.min_approved_percent if args.min_approved_percent else self.minapprovedpercent(args)
 
         donation = 0
         if args.donation == "option":
@@ -102,6 +104,12 @@ class LoadCommand(object):
 
     def keywords(self, args):
         return ""
+
+    def minapprovedamount(self, args):
+        return 100
+
+    def minapprovedpercent(self, args):
+        return 90
         
 importparser = argparse.ArgumentParser(add_help=False)
 importparser.add_argument("--title", default = None)
@@ -413,17 +421,17 @@ class setup(Command):
         return parser
 
     def resetdatabase(self):
-        try:
-            hits = session.query(HIT)
-            hits = hits.filter(HIT.published == True)
-            hits = hits.filter(HIT.completed == False)
-            for hit in hits:
-                print "Disabled HIT {0}".format(hit.hitid)
-                hit.disable()
-        except:
-            print "Failed disabling online HITs. Disable manually with:"
-            print "\timport config, turkic.api"
-            print "\tturkic.api.server.purge()"
+        #try:
+        #    hits = session.query(HIT)
+        #    hits = hits.filter(HIT.published == True)
+        #    hits = hits.filter(HIT.completed == False)
+        #    for hit in hits:
+        #        print "Disabled HIT {0}".format(hit.hitid)
+        #        hit.disable()
+        #except:
+        #    print "Failed disabling online HITs. Disable manually with:"
+        #    print "\timport config, turkic.api"
+        #    print "\tturkic.api.server.purge()"
         database.reinstall()
         print "Database reset!"
 
