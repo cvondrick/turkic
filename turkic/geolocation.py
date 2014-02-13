@@ -33,24 +33,23 @@ cache = {}
 def lookup(ip):
     if ip not in cache:
         logger.info("Query for {0}".format(ip))
-        response = urllib2.urlopen("http://api.ipinfodb.com/v2/ip_query.php?"
-            "key={0}&ip={1}&timezone=true".format(apikey, ip))
+        response = urllib2.urlopen("http://api.ipinfodb.com/v3/ip-city?"
+            "key={0}&ip={1}&format=xml".format(apikey, ip))
         xml = ElementTree.parse(response)
 
-        zip = xml.find("ZipPostalCode").text
-        zip = int(zip) if zip else None
-        latitude = xml.find("Latitude").text
+        zip = xml.find("zipCode").text
+        latitude = xml.find("latitude").text
         latitude = float(latitude) if latitude else None
-        longitude = xml.find("Longitude").text
+        longitude = xml.find("longitude").text
         longitude = float(longitude) if longitude else None
 
-        cache[ip] = Location(countrycode = xml.find("CountryCode").text,
-                             country = xml.find("CountryName").text,
-                             region = xml.find("RegionName").text,
-                             city = xml.find("City").text,
+        cache[ip] = Location(countrycode = xml.find("countryCode").text,
+                             country = xml.find("countryName").text,
+                             region = xml.find("regionName").text,
+                             city = xml.find("cityName").text,
                              zip = zip,
                              latitude = latitude,
                              longitude = longitude,
-                             timezone = xml.find("TimezoneName").text,
+                             timezone = xml.find("timeZone").text,
                              ip = ip)
     return cache[ip]
