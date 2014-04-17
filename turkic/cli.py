@@ -64,6 +64,7 @@ class LoadCommand(object):
         keywords = args.keywords if args.keywords else self.keywords(args)
         minapprovedamount = args.min_approved_amount if args.min_approved_amount else self.minapprovedamount(args)
         minapprovedpercent = args.min_approved_percent if args.min_approved_percent else self.minapprovedpercent(args)
+        countrycode = args.only_allow_country
 
         donation = 0
         if args.donation == "option":
@@ -80,7 +81,8 @@ class LoadCommand(object):
                          donation  = donation,
                          offline = args.offline,
                          minapprovedamount = args.min_approved_amount,
-                         minapprovedpercent = args.min_approved_percent)
+                         minapprovedpercent = args.min_approved_percent,
+                         countrycode = countrycode)
 
         self(args, group)
 
@@ -123,6 +125,7 @@ importparser.add_argument("--donation",
 importparser.add_argument("--offline", action="store_true")
 importparser.add_argument("--min-approved-percent", type=int)
 importparser.add_argument("--min-approved-amount", type=int)
+importparser.add_argument("--only-allow-country", default = None)
 
 def main(args = None):
     """

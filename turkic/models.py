@@ -27,6 +27,7 @@ class HITGroup(database.Base):
     offline             = Column(Boolean, default = False)
     minapprovedamount   = Column(Integer, default = None)
     minapprovedpercent  = Column(Integer, default = None)
+    countrycode         = Column(String(10), default = None)
 
 class Worker(database.Base):
     __tablename__ = "turkic_workers"
@@ -126,6 +127,7 @@ class HIT(database.Base):
             height = self.group.height,
             minapprovedamount = self.group.minapprovedamount,
             minapprovedpercent = self.group.minapprovedpercent,
+            countrycode = self.group.countrycode,
             page = self.getpage())
         self.hitid = resp.hitid
         self.published = True
@@ -274,19 +276,20 @@ class ConstantBonus(BonusSchedule):
     def description(self):
         return (self.amount, "bonus")
 
-reasons = ["Thanks for your hard work!",
-           "Excellent work!",
-           "Excellent job!",
-           "Great work!",
-           "Great job!",
-           "Fantastic job!",
-           "Perfect!",
-           "Thank you!",
-           "Please keep working!",
-           "Your work is helping advance research.",
-           "We appreciate your work.",
-           "Please keep working.",
-           "You are doing an excellent job.",
-           "You are doing a great job.",
-           "You are doing a superb job.",
-           "Keep up the fantastic work!"]
+reasons = [""]
+#reasons = ["Thanks for your hard work!",
+#           "Excellent work!",
+#           "Excellent job!",
+#           "Great work!",
+#           "Great job!",
+#           "Fantastic job!",
+#           "Perfect!",
+#           "Thank you!",
+#           "Please keep working!",
+#           "Your work is helping advance research.",
+#           "We appreciate your work.",
+#           "Please keep working.",
+#           "You are doing an excellent job.",
+#           "You are doing a great job.",
+#           "You are doing a superb job.",
+#           "Keep up the fantastic work!"]

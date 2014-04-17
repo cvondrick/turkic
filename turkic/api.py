@@ -58,7 +58,7 @@ class Server(object):
 
     def createhit(self, title, description, page, amount, duration,
         lifetime, keywords = "", autoapprove = 604800, height = 650,
-        minapprovedpercent = None, minapprovedamount = None):
+        minapprovedpercent = None, minapprovedamount = None, countrycode = None):
         """
         Creates a HIT on Mechanical Turk.
         
@@ -93,6 +93,13 @@ class Server(object):
             r[base + "QualificationTypeId"] = "00000000000000000040"
             r[base + "Comparator"] = "GreaterThanOrEqualTo"
             r[base + "IntegerValue"] = minapprovedamount 
+
+        if countrycode:
+            qualcounter += 1
+            base = "QualificationRequirement.{0}." .format(qualcounter)
+            r[base + "QualificationTypeId"] = "00000000000000000071"
+            r[base + "Comparator"] = "EqualTo"
+            r[base + "LocaleValue.Country"] = countrycode 
 
         r["Question"] = ("<ExternalQuestion xmlns=\"http://mechanicalturk"
                          ".amazonaws.com/AWSMechanicalTurkDataSchemas/"
