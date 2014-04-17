@@ -92,6 +92,11 @@ class HIT(database.Base):
     published     = Column(Boolean, default = False, index = True)
     page           = Column(String(250), nullable = False, default = "")
 
+    discriminator = Column("type", String(250))
+
+    __mapper_args__ = {"polymorphic_on": discriminator,
+                       "with_polymorphic": "*"}
+
     def publish(self):
         if self.published:
             raise RuntimeError("HIT cannot be published because it has already"
@@ -124,7 +129,7 @@ class HIT(database.Base):
         else:
             worker = workerid
 
-        assignment = Assignment(hitid = self.hitid,
+        assignment = Assignment(hitid = self.id,
                                 assignmentid = assignmentid,
                                 worker = worker,
                                 completed = True)
@@ -135,15 +140,14 @@ class HIT(database.Base):
 
         return assignment
 
-    @property
-    def completed(self):
+    def iscompleted(self):
         return len(self.assignments) == self.group.maxassignments
 
     def disable(self):
         if not self.published:
             raise RuntimeError("HIT cannot be disabled because "
                                "it is not published")
-        if self.completed:
+        if self.iscompleted():
             raise RuntimeError("HIT cannot be disabled because "
                                "it is completed")
         api.server.disable(self.hitid)
@@ -164,7 +168,7 @@ class Assignment(database.Base):
     __tablename__ = "turkic_assignments"
 
     id            = Column(Integer, primary_key = True)
-    hitid         = Column(String(30), ForeignKey(HIT.hitid), index = True)
+    hitid         = Column(Integer, ForeignKey(HIT.id), index = True)
     hit           = relationship(HIT, backref = "assignments")
     assignmentid  = Column(String(30))
     workerid      = Column(String(14), ForeignKey(Worker.id), index = True)

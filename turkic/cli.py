@@ -65,13 +65,7 @@ class LoadCommand(object):
         minapprovedamount = args.min_approved_amount if args.min_approved_amount else self.minapprovedamount(args)
         minapprovedpercent = args.min_approved_percent if args.min_approved_percent else self.minapprovedpercent(args)
         countrycode = args.only_allow_country
-        maxassignments = args.number if args.number else self.maxassignments(args)
-
-        donation = 0
-        if args.donation == "option":
-            donation = 1
-        elif args.donation == "force":
-            donation = 2
+        maxassignments = args.max_assignments if args.max_assignments else self.maxassignments(args)
 
         group = HITGroup(title = title,
                          description = description,
@@ -79,7 +73,6 @@ class LoadCommand(object):
                          lifetime = lifetime,
                          cost = cost,
                          keywords = keywords,
-                         donation  = donation,
                          offline = args.offline,
                          minapprovedamount = args.min_approved_amount,
                          minapprovedpercent = args.min_approved_percent,
@@ -125,13 +118,11 @@ importparser.add_argument("--cost", "-c", type=float, default = None)
 importparser.add_argument("--duration", type=int, default = None)
 importparser.add_argument("--lifetime", type=int, default = None)
 importparser.add_argument("--keywords", default = None)
-importparser.add_argument("--donation",
-    choices = ['force', 'option', 'disable'], default = 'disable')
 importparser.add_argument("--offline", action="store_true")
 importparser.add_argument("--min-approved-percent", type=int)
 importparser.add_argument("--min-approved-amount", type=int)
 importparser.add_argument("--only-allow-country", default = None)
-importparser.add_argument("--number", type=int, default = None)
+importparser.add_argument("--max-assignments", type=int, default = None)
 
 def main(args = None):
     """
@@ -210,10 +201,12 @@ class status(Command):
         print ""
 
     def serverstatus(self, session):
-        available = session.query(func.sum(HIT.maxassignments)).filter(HIT.ready == True).scalar()
-        published = session.query(func.sum(HIT.maxassignments)).filter(HIT.published == True).count()
-        completed = session.query(func.sum(HIT.maxassignments)).filter(HIT.completed == True).count()
-        compensated = session.query(func.sum(HIT.maxassignments)).filter(HIT.compensated == True).count()
+        base = session.query(func.sum(HITGroup.maxassignments)).join(HIT)
+
+        available = base.filter(HIT.ready == True).scalar() or 0
+        published = base.filter(HIT.published == True).scalar() or 0
+        completed = session.query(Assignment).filter(Assignment.completed == True).count()
+        compensated = session.query(Assignment).filter(Assignment.compensated == True).count()
         remaining = published - completed
 
         print "Status:"
@@ -647,7 +640,6 @@ else:
     handler("Launch work")(publish)
     handler("Pay workers")(compensate)
     handler("Setup the application")(setup)
-    handler("Report status on donations")(donation)
     handler("Manage the workers")(workers)
     handler("Invalidates and rewspawn tasks")(invalidate)
     handler("Email a worker")(email)

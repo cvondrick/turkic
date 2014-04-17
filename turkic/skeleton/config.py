@@ -3,6 +3,7 @@ accesskey = ""
 sandbox   = True
 localhost = "http://localhost/"
 database  = "mysql://root@localhost/turkic"
+geolocation = ""
 
 # probably no need to mess below this line
 
