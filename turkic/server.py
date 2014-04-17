@@ -141,31 +141,20 @@ def getjobstats(hitid, workerid):
         status["blocked"] = worker.blocked
     return status
 
-def savejobstats(hitid, timeaccepted, timecompleted, environ):
+def savejobstats(assignmentid, timeaccepted, timecompleted, environ):
     """
     Saves statistics for a job.
     """
-    hit = session.query(models.HIT).filter(models.HIT.hitid == hitid).one()
+    assignment = session.query(models.Assignment).filter(models.Assignment.assignmentid == assignmentid).one()
 
-    hit.timeaccepted = datetime.fromtimestamp(int(timeaccepted) / 1000)
-    hit.timecompleted = datetime.fromtimestamp(int(timecompleted) / 1000)
-    hit.timeonserver = datetime.now()
+    assignment.timeaccepted = datetime.fromtimestamp(int(timeaccepted) / 1000)
+    assignment.timecompleted = datetime.fromtimestamp(int(timecompleted) / 1000)
+    assignment.timeonserver = datetime.now()
 
-    hit.ipaddress = environ.get("HTTP_X_FORWARDED_FOR", None)
-    hit.ipaddress = environ.get("REMOTE_ADDR", hit.ipaddress)
+    assignment.ipaddress = environ.get("HTTP_X_FORWARDED_FOR", None)
+    assignment.ipaddress = environ.get("REMOTE_ADDR", hit.ipaddress)
 
-    session.add(hit)
-    session.commit()
-
-def savedonationstatus(hitid, donation):
-    """
-    Saves the donation statistics
-    """
-    hit = session.query(models.HIT).filter(models.HIT.hitid == hitid).one()
-    hit.opt2donate = float(donation)
-    hit.opt2donate = min(max(hit.opt2donate, 0), 1)
-
-    session.add(hit)
+    session.add(assignment)
     session.commit()
 
 def markcomplete(hitid, assignmentid, workerid):
@@ -174,21 +163,9 @@ def markcomplete(hitid, assignmentid, workerid):
     MTurk form is submitted.
     """
     hit = session.query(models.HIT).filter(models.HIT.hitid == hitid).one()
-    hit.markcompleted(workerid, assignmentid)
+    assignment = hit.markcompleted(workerid, assignmentid)
+    session.add(assignment)
     session.add(hit)
-    session.commit()
-
-def saveeventlog(hitid, events):
-    """
-    Records the event log to database.
-    """
-    hit = session.query(models.HIT).filter(models.HIT.hitid == hitid).one()
-
-    for timestamp, domain, message in events:
-        timestamp = datetime.fromtimestamp(int(timestamp) / 1000)
-        event = EventLog(hit = hit, domain = domain, message = message,
-                         timestamp = timestamp)
-        session.add(event)
     session.commit()
 
 handlers["turkic_getjobstats"] = \

@@ -119,13 +119,9 @@ function mturk_submit(callback)
     function redirect()
     {
         server_request("turkic_savejobstats", 
-            [params.hitid, turkic_timeaccepted, now], 
+            [params.assignmentid, turkic_timeaccepted, now], 
             function() {
-                mturk_showdonate(function() {
-                    eventlog_save(function() {
-                        $("#turkic_mturk").submit();
-                    });
-                });
+                $("#turkic_mturk").submit();
             });
     }
 
@@ -296,68 +292,6 @@ function mturk_blockbadworkers(callback)
     }
 }
 
-function mturk_showdonate(callback)
-{
-    var str = '<a title="Help end child hunger" href="https://www.wfp.org/' +
-              'donate/fillthecup?utm_medium=banner&utm_campaign=bb-fillthe' + 
-              'cup125x125" target="_blank"><img width="125" height="125" a' +
-              'lt="Help end child hunger" src="http://www.wfp.org/sites/de' +
-              'fault/files/125x125_fill_the_cup.jpg" align="right" /></a>';
-    str += "<h1>Help us end world hunger.</h1>" +
-           "<p>We are offering you the chance to work on behalf of " +
-           "the United Nation's World Food Programme. When your HIT is " +
-           "accepted, we will pay you both your standard compensation as " +
-           "well as a bonus. If you choose, we can donate part of your " +
-           "bonus to charity instead.</p>" +
-           "<p>If every worker donates, we can collectively donate " +
-           "hundreds of thousands of dollars. 25&cent; will feed a " +
-           "hungry schoolchild enough nutritious food for a day. $50 can " +
-           "feed a child for an entire year. Your work can have an " +
-           "impact &mdash; all you must do is donate.</p>";
-
-    str += "<p style='margin-left:30px;'>";
-    str += "<strong>How much do you wish to donate?</strong><br>";
-    str += "<input type='radio' name='donateamt' id='donate0' value='0'>";
-    str += "<label for='donate0'><strong>None</strong>: I want to keep ";
-    str += "all of my bonus.</label><br>";
-    str += "<input type='radio' name='donateamt' id='donate50' value='.5' ";
-    str += "checked='checked'>";
-    str += "<label for='donate50'><strong>Half</strong>: I wish to donate half of my ";
-    str += "bonus and keep the other half.</label><br>";
-    str += "<input type='radio' name='donateamt' id='donate100' value='1'>";
-    str += "<label for='donate100'><strong>All</strong>: Please donate my bonus to fight world hunger.</label><br>";
-    str += "<input type='button' id='turkic_donate_close' value='Submit HIT'>";
-    str += "</p>";
-
-    str += "<p>See which other workers are donating and where you rank on our <a href='http://deepthought.ics.uci.edu/~cvondrick/donation/' target='_blank'>status page</a>.</p>";
-
-
-    server_jobstats(function(data) {
-        if (data["donationcode"] == 0 || data["bonuses"].length == 0)
-        {
-            callback();
-            return;
-        }
-
-        console.log("Show donation")
-        var overlay = $('<div id="turkic_overlay"></div>').appendTo("body");
-
-        var donation = $('<div id="turkic_donation"></div>').appendTo("body");
-        donation.append(str);
-
-        $("#turkic_donate_close").click(function() {
-            var amount = $("input[name=donateamt]:checked").val();
-            var params = mturk_parameters();
-            server_request("turkic_savedonationstatus", [params.hitid, amount],
-                            function() {
-                                overlay.remove();
-                                donation.remove();
-                                callback();
-                            });
-        });
-    });
-}
-
 function worker_isverified(iftrue, iffalse)
 {
     if (mturk_isassigned())
@@ -377,47 +311,6 @@ function worker_isverified(iftrue, iffalse)
     {
         // not accepted, so assume verified to create illusion
         iftrue();
-    }
-}
-
-
-var turkic_event_log = [];
-function eventlog(domain, message)
-{
-    var timestamp = (new Date()).getTime();
-    turkic_event_log.push([timestamp, domain, message]);
-    //console.log(timestamp + " " + domain + ": " + message);
-}
-
-function eventlog_save(callback)
-{
-    if (mturk_submitallowed())
-    {
-        var params = mturk_parameters();
-        var data = "[";
-        var counter = 0;
-        for (var i in turkic_event_log)
-        {
-            data += "[" + turkic_event_log[i][0] + ",";
-            data += "\"" + turkic_event_log[i][1] + "\",";
-            data += "\"" + turkic_event_log[i][2] + "\"],";
-            counter++;
-        }
-        if (counter == 0)
-        {
-            callback();
-            return;
-        }
-
-        data = data.substr(0, data.length - 1) + "]";
-        console.log(data);
-        server_post("turkic_saveeventlog", [params.hitid], data, function() {
-            callback();
-        });
-    }
-    else
-    {
-        callback();
     }
 }
 

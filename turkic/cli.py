@@ -65,6 +65,7 @@ class LoadCommand(object):
         minapprovedamount = args.min_approved_amount if args.min_approved_amount else self.minapprovedamount(args)
         minapprovedpercent = args.min_approved_percent if args.min_approved_percent else self.minapprovedpercent(args)
         countrycode = args.only_allow_country
+        maxassignments = args.number if args.number else self.maxassignments(args)
 
         donation = 0
         if args.donation == "option":
@@ -82,7 +83,8 @@ class LoadCommand(object):
                          offline = args.offline,
                          minapprovedamount = args.min_approved_amount,
                          minapprovedpercent = args.min_approved_percent,
-                         countrycode = countrycode)
+                         countrycode = countrycode,
+                         maxassignments = maxassignments)
 
         self(args, group)
 
@@ -112,6 +114,9 @@ class LoadCommand(object):
 
     def minapprovedpercent(self, args):
         return 90
+
+    def maxassignments(self, args):
+        return 1
         
 importparser = argparse.ArgumentParser(add_help=False)
 importparser.add_argument("--title", default = None)
@@ -126,6 +131,7 @@ importparser.add_argument("--offline", action="store_true")
 importparser.add_argument("--min-approved-percent", type=int)
 importparser.add_argument("--min-approved-amount", type=int)
 importparser.add_argument("--only-allow-country", default = None)
+importparser.add_argument("--number", type=int, default = None)
 
 def main(args = None):
     """
@@ -204,10 +210,10 @@ class status(Command):
         print ""
 
     def serverstatus(self, session):
-        available = session.query(HIT).filter(HIT.ready == True).count()
-        published = session.query(HIT).filter(HIT.published == True).count()
-        completed = session.query(HIT).filter(HIT.completed == True).count()
-        compensated = session.query(HIT).filter(HIT.compensated == True).count()
+        available = session.query(func.sum(HIT.maxassignments)).filter(HIT.ready == True).scalar()
+        published = session.query(func.sum(HIT.maxassignments)).filter(HIT.published == True).count()
+        completed = session.query(func.sum(HIT.maxassignments)).filter(HIT.completed == True).count()
+        compensated = session.query(func.sum(HIT.maxassignments)).filter(HIT.compensated == True).count()
         remaining = published - completed
 
         print "Status:"
@@ -301,7 +307,6 @@ class publish(Command):
                     print "Cannot disable offline HITs."
                     return
                 query = query.filter(HIT.published == True)
-                query = query.filter(HIT.completed == False)
                 if args.limit > 0:
                     query = query.limit(args.limit)
 
@@ -319,6 +324,8 @@ class publish(Command):
                     query = query.limit(args.limit)
 
                 for hit in query:
+                    if hit.completed:
+                        continue # skip completed hits
                     if args.offline:
                         print hit.offlineurl(config.localhost)
                     else:
@@ -378,41 +385,36 @@ class compensate(Command):
             warnkeys.extend(line.strip() for line in open(f))
             
         try:
-            query = session.query(HIT)
-            query = query.filter(HIT.completed == True)
-            query = query.filter(HIT.compensated == False)
+            query = session.query(Assignment)
+            query = query.filter(Assignment.completed == True)
+            query = query.filter(Assignment.compensated == False)
+            query = query.join(HIT)
             query = query.join(HITGroup)
             query = query.filter(HITGroup.offline == False)
 
             if args.limit:
                 query = query.limit(args.limit)
 
-            for hit in query:
-                if not hit.check():
-                    print "WARNING: {0} failed payment check, ignoring".format(hit.hitid)
+            for assignment in query:
+                if not assignment.check():
+                    print "WARNING: {0} failed payment check, ignoring".format(assignment.assignmentid)
                     continue
                 try:
-                    self.process(hit, acceptkeys, rejectkeys, warnkeys,
+                    self.process(assignment, acceptkeys, rejectkeys, warnkeys,
                         args.validated, args.default)
-                    if hit.compensated:
-                        if hit.accepted:
-                            print "Accepted HIT {0}".format(hit.hitid)
+                    if assignment.compensated:
+                        if assignment.accepted:
+                            print "Accepted Assignment {0}".format(assignment.assignmentid)
                         else:
-                            print "Rejected HIT {0}".format(hit.hitid)
-                        session.add(hit)
+                            print "Rejected Assignment {0}".format(assignment.assignmentid)
+                        session.add(assignment)
                 except CommunicationError as e:
-                    hit.compensated = True
-                    session.add(hit)
-                    print "Error with HIT {0}: {1}".format(hit.hitid, e)
+                    assignment.compensated = True
+                    session.add(assignment)
+                    print "Error with Assignment {0}: {1}".format(assignment.assignmentid, e)
         finally:
             session.commit()
             session.close()
-
-class donation(Command):
-    def __call__(self, args):
-        hits = session.query(HIT).filter(HIT.donatedamount > 0)
-        for hit in hits:
-            print hit.workerid, hit.timeonserver, hit.donatedamount
 
 class setup(Command):
     def setup(self):
@@ -473,7 +475,7 @@ class invalidate(Command):
     def setup(self):
         parser = argparse.ArgumentParser()
         parser.add_argument("id")
-        parser.add_argument("--hit", action = "store_true", default = False)
+        parser.add_argument("--assignment", action = "store_true", default = False)
         parser.add_argument("--no-block", action = "store_true",
                             default = False)
         parser.add_argument("--no-publish", action = "store_true",
@@ -481,25 +483,26 @@ class invalidate(Command):
         return parser
 
     def __call__(self, args):
-        query = session.query(HIT)
-        query = query.filter(HIT.useful == True)
-        if args.hit:
-            query = query.filter(HIT.hitid == args.id)
+        query = session.query(Assignment)
+        query = query.filter(Assignment.useful == True)
+        if args.assignment:
+            query = query.filter(Assignment.assignmentid == args.id)
         else:
             worker = session.query(Worker).get(args.id)
             if not worker:
                 print "Worker \"{0}\" not found".format(args.id)
                 return
             if not args.no_block:
-                worker.block("HIT was invalid.")
+                worker.block("Assignment was invalid.")
                 print "Blocked worker \"{0}\"".format(args.id)
                 session.add(worker)
 
-            query = query.filter(HIT.workerid == args.id)
+            query = query.filter(Assignment.workerid == args.id)
 
-        for hit in query:
-            replacement = hit.invalidate() 
-            session.add(hit)
+        raise NotImplementedError("function is not implemented yet for assignments")
+
+        for assignment in query:
+            assignment.invalidate() 
             print "Invalidated {0}".format(hit.hitid)
 
             if replacement:
@@ -531,9 +534,8 @@ class workers(Command):
                 worker.numacceptances = data[2]
                 worker.numrejections = data[3]
                 worker.blocked = data[4]
-                worker.donatedamount = data[5]
-                worker.bonusamount = data[6]
-                worker.verified = data[7]
+                worker.bonusamount = data[5]
+                worker.verified = data[6]
                 print "Loaded {0}".format(worker.id)
                 session.add(worker)
             session.commit()
@@ -545,7 +547,6 @@ class workers(Command):
                              worker.numacceptances,
                              worker.numrejections,
                              worker.blocked,
-                             worker.donatedamount,
                              worker.bonusamount,
                              worker.verified))
                 print "Dumped {0}".format(worker.id)
@@ -580,7 +581,6 @@ class workers(Command):
                 print "Accepted: {0}".format(worker.numacceptances)
                 print "Rejected: {0}".format(worker.numrejections)
                 print "Bonuses: {0}".format(worker.bonusamount)
-                print "Donated: {0}".format(worker.donatedamount)
                 print "Verified: {0}".format(worker.verified)
                 print "Blocked: {0}".format(worker.blocked)
                 if args.location:

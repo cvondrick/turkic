@@ -28,6 +28,7 @@ class HITGroup(database.Base):
     minapprovedamount   = Column(Integer, default = None)
     minapprovedpercent  = Column(Integer, default = None)
     countrycode         = Column(String(10), default = None)
+    maxassignments      = Column(Integer, default = 1)
 
 class Worker(database.Base):
     __tablename__ = "turkic_workers"
@@ -37,7 +38,6 @@ class Worker(database.Base):
     numacceptances = Column(Integer, nullable = False, default = 0)
     numrejections  = Column(Integer, nullable = False, default = 0)
     blocked        = Column(Boolean, default = False)
-    donatedamount  = Column(Float, default = 0.0, nullable = False)
     bonusamount    = Column(Float, default = 0.0, nullable = False)
     verified       = Column(Boolean, default = False)
 
@@ -84,34 +84,13 @@ class Worker(database.Base):
 class HIT(database.Base):
     __tablename__ = "turkic_hits"
 
-    id            = Column(Integer, primary_key = True)
-    hitid         = Column(String(30))
-    groupid       = Column(Integer, ForeignKey(HITGroup.id), index = True)
-    group         = relationship(HITGroup, backref = "hits")
-    assignmentid  = Column(String(30))
-    workerid      = Column(String(14), ForeignKey(Worker.id), index = True)
-    worker        = relationship(Worker, backref = "tasks")
+    id             = Column(Integer, primary_key = True)
+    hitid          = Column(String(30))
+    groupid        = Column(Integer, ForeignKey(HITGroup.id), index = True)
+    group          = relationship(HITGroup, backref = "hits")
     ready         = Column(Boolean, default = True, index = True)
     published     = Column(Boolean, default = False, index = True)
-    completed     = Column(Boolean, default = False, index = True)
-    compensated   = Column(Boolean, default = False, index = True)
-    accepted      = Column(Boolean, default = False, index = True)
-    validated     = Column(Boolean, default = False, index = True)
-    reason        = Column(Text)
-    comments      = Column(Text)
-    timeaccepted  = Column(DateTime)
-    timecompleted = Column(DateTime)
-    timeonserver  = Column(DateTime)
-    ipaddress     = Column(String(15))
-    page          = Column(String(250), nullable = False, default = "")
-    opt2donate    = Column(Float, default = 0)
-    donatedamount = Column(Float, nullable = False, default = 0.0)
-    bonusamount   = Column(Float, nullable = False, default = 0.0)
-    useful        = Column(Boolean, default = True)
-
-    discriminator = Column("type", String(250))
-    __mapper_args__ = {"polymorphic_on": discriminator,
-                       "with_polymorphic": "*"}
+    page           = Column(String(250), nullable = False, default = "")
 
     def publish(self):
         if self.published:
@@ -144,13 +123,21 @@ class HIT(database.Base):
             worker = Worker.lookup(workerid, session)
         else:
             worker = workerid
+
+        assignment = Assignment(hitid = self.hitid,
+                                assignmentid = assignmentid,
+                                worker = worker,
+                                completed = True)
             
-        self.completed = True
-        self.assignmentid = assignmentid
-        self.worker = worker
-        self.worker.numsubmitted += 1
+        worker.numsubmitted += 1
 
         logger.debug("HIT {0} marked complete".format(self.hitid))
+
+        return assignment
+
+    @property
+    def completed(self):
+        return len(self.assignments) == self.group.maxassignments
 
     def disable(self):
         if not self.published:
@@ -166,6 +153,40 @@ class HIT(database.Base):
         logger.debug("HIT (was {0}) disabled".format(oldhitid))
         return oldhitid
 
+    
+    def offlineurl(self, localhost):
+        return "{0}{1}&hitId=offline".format(localhost, self.getpage())
+
+    def invalidate(self):
+        raise NotImplementedError("Subclass must implement 'invalid()'")
+
+class Assignment(database.Base):
+    __tablename__ = "turkic_assignments"
+
+    id            = Column(Integer, primary_key = True)
+    hitid         = Column(String(30), ForeignKey(HIT.hitid), index = True)
+    hit           = relationship(HIT, backref = "assignments")
+    assignmentid  = Column(String(30))
+    workerid      = Column(String(14), ForeignKey(Worker.id), index = True)
+    worker        = relationship(Worker, backref = "tasks")
+    completed     = Column(Boolean, default = False, index = True)
+    compensated   = Column(Boolean, default = False, index = True)
+    accepted      = Column(Boolean, default = False, index = True)
+    validated     = Column(Boolean, default = False, index = True)
+    reason        = Column(Text)
+    comments      = Column(Text)
+    timeaccepted  = Column(DateTime)
+    timecompleted = Column(DateTime)
+    timeonserver  = Column(DateTime)
+    ipaddress     = Column(String(15))
+    bonusamount   = Column(Float, nullable = False, default = 0.0)
+    useful        = Column(Boolean, default = True)
+
+    discriminator = Column("type", String(250))
+
+    __mapper_args__ = {"polymorphic_on": discriminator,
+                       "with_polymorphic": "*"}
+
     def accept(self, reason = None, bs = True):
         if not reason:
             if bs:
@@ -175,11 +196,6 @@ class HIT(database.Base):
 
         for schedule in self.group.schedules:
             schedule.award(self)
-
-        if self.donatedamount > 0:
-            reason = (reason + " For this HIT, we have donated ${0:>4.2f} to "
-            "the World Food Programme on your behalf. Thank you for your "
-            "support!".format(self.donatedamount))
 
         api.server.accept(self.assignmentid, reason)
         self.accepted = True
@@ -210,15 +226,7 @@ class HIT(database.Base):
 
         logger.debug("Rejected work for HIT {0}".format(self.hitid))
 
-    def check(self):
-        return True
-    
     def awardbonus(self, amount, reason = None, bs = True):
-        self.donatedamount += amount * self.opt2donate
-        self.worker.donatedamount += amount * self.opt2donate
-
-        amount = math.floor(amount * (1 - self.opt2donate) * 100) / 100
-
         if amount > 0:
             logger.debug("Awarding bonus of {0} on HIT {1}"
                             .format(amount, self.hitid))
@@ -231,21 +239,8 @@ class HIT(database.Base):
                     reason = ""
             api.server.bonus(self.workerid, self.assignmentid, amount, reason)
 
-    def offlineurl(self, localhost):
-        return "{0}{1}&hitId=offline".format(localhost, self.getpage())
-
-    def invalidate(self):
-        raise NotImplementedError("Subclass must implement 'invalid()'")
-
-class EventLog(database.Base):
-    __tablename__ = "turkic_event_log"
-
-    id        = Column(Integer, primary_key = True)
-    hitid     = Column(Integer, ForeignKey(HIT.id), index = True)
-    hit       = relationship(HIT, cascade = "all", backref = "hits")
-    domain    = Column(Text)
-    message   = Column(Text)
-    timestamp = Column(DateTime)
+    def check(self):
+        return True
 
 class BonusSchedule(database.Base):
     __tablename__ = "turkic_bonus_schedules"

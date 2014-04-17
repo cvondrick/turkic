@@ -58,7 +58,8 @@ class Server(object):
 
     def createhit(self, title, description, page, amount, duration,
         lifetime, keywords = "", autoapprove = 604800, height = 650,
-        minapprovedpercent = None, minapprovedamount = None, countrycode = None):
+        minapprovedpercent = None, minapprovedamount = None, countrycode = None,
+        maxassignments = 1):
         """
         Creates a HIT on Mechanical Turk.
         
@@ -76,7 +77,8 @@ class Server(object):
             "Reward.1.CurrencyCode": "USD",
             "AssignmentDurationInSeconds": duration,
             "AutoApprovalDelayInSeconds": autoapprove,
-            "LifetimeInSeconds": lifetime}
+            "LifetimeInSeconds": lifetime,
+            "MaxAssignments": maxassignments}
 
         qualcounter = 0
 
