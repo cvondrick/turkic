@@ -90,7 +90,6 @@ class HIT(database.Base):
     group          = relationship(HITGroup, backref = "hits")
     ready         = Column(Boolean, default = True, index = True)
     published     = Column(Boolean, default = False, index = True)
-    page           = Column(String(250), nullable = False, default = "")
 
     discriminator = Column("type", String(250))
 
