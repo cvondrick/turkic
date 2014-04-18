@@ -128,16 +128,30 @@ class HIT(database.Base):
         else:
             worker = workerid
 
-        assignment = Assignment(hitid = self.id,
-                                assignmentid = assignmentid,
-                                worker = worker,
-                                completed = True)
+        assignment = self.findassignment(assignmentid)
+        assignment.worker = worker
+        assignment.completed = True
             
         worker.numsubmitted += 1
 
         logger.debug("HIT {0} marked complete".format(self.hitid))
 
         return assignment
+
+    def findassignment(self, assignmentid):
+        if assignmentid == "offline":
+            assignmentid = "offline-{0}".format(self.id)
+
+        for assignment in self.assignments:
+            if assignment.assignmentid == assignmentid:
+                return assignment
+
+        assignment = self.newassignment()
+        assignment.assignmentid = assignmentid
+        return assignment
+
+    def newassignment(self):
+        raise NotImplementedError()
 
     def iscompleted(self):
         return len(self.assignments) == self.group.maxassignments
@@ -169,7 +183,7 @@ class Assignment(database.Base):
     id            = Column(Integer, primary_key = True)
     hitid         = Column(Integer, ForeignKey(HIT.id), index = True)
     hit           = relationship(HIT, backref = "assignments")
-    assignmentid  = Column(String(30))
+    assignmentid  = Column(String(30), index = True)
     workerid      = Column(String(14), ForeignKey(Worker.id), index = True)
     worker        = relationship(Worker, backref = "tasks")
     completed     = Column(Boolean, default = False, index = True)

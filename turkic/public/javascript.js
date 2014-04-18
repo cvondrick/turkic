@@ -57,6 +57,11 @@ function mturk_parameters()
         }
     }
 
+    if (retval.hitid == "offline") {
+      retval.assignmentid = "offline";
+      retval.workerid = "offline";
+    }
+
     return retval;
 }
 
@@ -80,7 +85,11 @@ function mturk_ready(callback)
 function mturk_isassigned()
 {
     var params = mturk_parameters();
-    return params.assignmentid && params.assignmentid != "ASSIGNMENT_ID_NOT_AVAILABLE" && params.hitid && params.workerid;
+    return (params.assignmentid &&
+            params.assignmentid != "ASSIGNMENT_ID_NOT_AVAILABLE" &&
+            params.hitid &&
+            params.workerid &&
+            params.hitid != "offline");
 }
 
 function mturk_isoffline()
