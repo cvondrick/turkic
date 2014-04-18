@@ -12,6 +12,14 @@ Use to connect to the configured database.
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.engine import reflection
+from sqlalchemy.schema import (
+    MetaData,
+    Table,
+    DropTable,
+    ForeignKeyConstraint,
+    DropConstraint,
+    )
 import logging
 
 #logging.basicConfig()
@@ -49,5 +57,33 @@ else:
         Reinstalls the database by dropping all existing tables. Actual data is
         not migrated!
         """
-        Base.metadata.drop_all(engine)
+        dropall()
         Base.metadata.create_all(engine)
+
+    def dropall():
+        """
+        Drops all constraints, then all tables.
+        """
+        inspector = reflection.Inspector.from_engine(engine)
+        metadata = MetaData()
+
+        tbs = []
+        all_fks = []
+
+        for table_name in inspector.get_table_names():
+            fks = []
+            for fk in inspector.get_foreign_keys(table_name):
+                if not fk['name']:
+                    continue
+                fks.append(
+                    ForeignKeyConstraint((),(),name=fk['name'])
+                    )
+            t = Table(table_name,metadata,*fks)
+            tbs.append(t)
+            all_fks.extend(fks)
+
+        for fkc in all_fks:
+            session.execute(DropConstraint(fkc))
+
+        for table in tbs:
+            session.execute(DropTable(table))

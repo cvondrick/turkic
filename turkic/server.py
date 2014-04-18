@@ -13,7 +13,6 @@ the 'handler' decorator. Example:
 
 import json
 from turkic.database import session
-from turkic.models import EventLog
 
 handlers = {}
 
@@ -174,7 +173,3 @@ handlers["turkic_savejobstats"] = \
     (savejobstats, "text/json", True, False, True)
 handlers["turkic_markcomplete"] = \
     (markcomplete, "text/json", True, False, False)
-handlers["turkic_savedonationstatus"] = \
-    (savedonationstatus, "text/json", True, False, False)
-handlers["turkic_saveeventlog"] = \
-    (saveeventlog, "text/json", True, "json", False)

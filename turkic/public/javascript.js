@@ -127,14 +127,14 @@ function mturk_submit(callback)
 
     if (mturk_isoffline())
     {
-        callback(function() { });
+        callback(function() { }, params);
     }
     else
     {
         server_request("turkic_markcomplete",
             [params.hitid, params.assignmentid, params.workerid],
             function() {
-                callback(redirect);
+                callback(redirect, params);
             });
     }
 }
