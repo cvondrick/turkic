@@ -317,7 +317,7 @@ class publish(Command):
                     query = query.limit(args.limit)
 
                 for hit in query:
-                    if hit.completed:
+                    if hit.iscompleted():
                         continue # skip completed hits
                     if args.offline:
                         print hit.offlineurl(config.localhost)

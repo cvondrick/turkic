@@ -151,7 +151,7 @@ def savejobstats(assignmentid, timeaccepted, timecompleted, environ):
     assignment.timeonserver = datetime.now()
 
     assignment.ipaddress = environ.get("HTTP_X_FORWARDED_FOR", None)
-    assignment.ipaddress = environ.get("REMOTE_ADDR", hit.ipaddress)
+    assignment.ipaddress = environ.get("REMOTE_ADDR", assignment.ipaddress)
 
     session.add(assignment)
     session.commit()
